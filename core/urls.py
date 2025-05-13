@@ -16,9 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.contrib.auth import views as auth_views  # Importa LoginView
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.views import LogoutView  # Importa LogoutView
+
+from doctors.views import dashboard  # Importa LoginView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', auth_views.LoginView.as_view(template_name='login.html'), name='login'),  # Pantalla principal
+    path('doctors/dashboard/', dashboard, name='doctor_dashboard'),  # Ruta para el dashboard del doctor
+    path('logout/', LogoutView.as_view(), name='logout'),  # Añadir la ruta de cierre de sesión
 ]

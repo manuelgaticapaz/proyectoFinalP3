@@ -1,0 +1,33 @@
+<!-- templates/dashboard.html -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Bienvenido, Dr(a). {{ request.user.first_name }} {{ request.user.last_name }}</h1>
+
+    <h2>Tus Citas Médicas</h2>
+    
+    <ul>
+        {% for cita in citas %}
+            <li>
+                <strong>{{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}</strong> con 
+                <strong>{{ cita.doctor.nombre }} {{ cita.doctor.apellidos }}</strong>
+                el {{ cita.fecha|date:"d/m/Y H:i" }} - Motivo: {{ cita.motivo }}
+            </li>
+        {% empty %}
+            <p>No tienes citas programadas.</p>
+        {% endfor %}
+    </ul>
+
+    <!-- Cerrar sesión mediante un formulario POST -->
+    <form action="{% url 'logout' %}" method="POST">
+        {% csrf_token %}
+        <button type="submit">Cerrar sesión</button>
+    </form>
+</body>
+</html>

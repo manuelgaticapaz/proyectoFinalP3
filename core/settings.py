@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'patients.apps.PatientsConfig', # O simplemente 'patients'
     'doctors.apps.DoctorsConfig',   # O simplemente 'doctors'
     'appointments.apps.AppointmentsConfig', # O simplemente 'appointments'
+    ##'rest_framework',
+    ##'api',
 ]
 
 MIDDLEWARE = [
@@ -124,5 +126,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = '/admin/'  # o la ruta que desees tras login
+LOGIN_REDIRECT_URL = 'doctors/dashboard/'  # o la ruta que desees tras login
 LOGOUT_REDIRECT_URL = '/'       # te puede redirigir al login otra vez
+
+# Duración de la sesión (en segundos)
+SESSION_COOKIE_AGE = 1800  # 30 min
+
+# Si deseas que la sesión se borre al cerrar el navegador
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
