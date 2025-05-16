@@ -1,20 +1,33 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
-from appointments.models import Appointment  # Cambiar la importación aquí
+from appointments.models import Appointment
 from .models import Doctor
 
 @login_required
 def dashboard(request):
     try:
-        # Obtener el doctor asociado con el usuario autenticado
         doctor = Doctor.objects.get(usuario=request.user)
+        citas = Appointment.objects.filter(doctor=doctor).order_by('-fecha').select_related('paciente')
         
-        # Filtrar las citas que tienen al doctor como su doctor
-        citas = Appointment.objects.filter(doctor=doctor).order_by('-fecha')  # Citas del doctor
+        # Diccionario para agrupar citas por prioridad del paciente
+        citas_por_prioridad = {
+            'Urgente': [],
+            'Alta': [],
+            'Media': [],
+            'Baja': [],    
+        }
+
+        for cita in citas:
+            prioridad = cita.paciente.get_prioridad_display()  # Obtener la etiqueta legible
+            if prioridad in citas_por_prioridad:
+                citas_por_prioridad[prioridad].append(cita)
+            else:
+                citas_por_prioridad[prioridad] = [cita]
 
     except Doctor.DoesNotExist:
-        # Si el usuario no es un doctor, redirigir a una página de inicio o error
-        return redirect('inicio')  # Puedes cambiar 'inicio' por la ruta que prefieras
-    
-    return render(request, 'dashboard.html', {'citas': citas, 'user_type': 'doctor'})
+        return redirect('doctor_dashboard')  # Cambia esta ruta si quieres
+
+    return render(request, 'dashboard.html', {
+        'citas_por_prioridad': citas_por_prioridad,
+        'user_type': 'doctor',
+    })

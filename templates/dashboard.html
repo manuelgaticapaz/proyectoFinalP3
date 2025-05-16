@@ -10,19 +10,27 @@
 <body>
     <h1>Bienvenido, Dr(a). {{ request.user.first_name }} {{ request.user.last_name }}</h1>
 
-    <h2>Tus Citas Médicas</h2>
-    
-    <ul>
-        {% for cita in citas %}
-            <li>
-                <strong>{{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}</strong> con 
-                <strong>{{ cita.doctor.nombre }} {{ cita.doctor.apellidos }}</strong>
-                el {{ cita.fecha|date:"d/m/Y H:i" }} - Motivo: {{ cita.motivo }}
-            </li>
-        {% empty %}
-            <p>No tienes citas programadas.</p>
+        <h2>Tus Citas Médicas</h2>
+
+        {% for prioridad, citas in citas_por_prioridad.items %}
+            <h3>Prioridad: {{ prioridad }}</h3>
+            {% if citas %}
+                <ul>
+                    {% for cita in citas %}
+                        <li>
+                            <strong>{{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}</strong> <!-- con 
+                            <strong>{{ cita.doctor.nombre }} {{ cita.doctor.apellidos }}</strong> -->el 
+                            {{ cita.fecha|date:"d/m/Y H:i" }} - Motivo: {{ cita.motivo }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No hay citas con prioridad {{ prioridad|lower }}.</p>
+            {% endif %}
         {% endfor %}
-    </ul>
+
+                
+<a href="{% url 'crear_cita' %}">Crear Nueva Cita</a>
 
     <!-- Cerrar sesión mediante un formulario POST -->
     <form action="{% url 'logout' %}" method="POST">

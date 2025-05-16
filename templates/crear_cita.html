@@ -1,0 +1,9 @@
+<h1>Crear Nueva Cita</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar Cita</button>
+</form>
+
+<a href="{% url 'doctor_dashboard' %}">Volver al Dashboard</a>
