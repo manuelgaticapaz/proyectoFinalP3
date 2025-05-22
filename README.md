@@ -5,7 +5,7 @@ Este proyecto es una aplicación web para gestionar citas médicas, creada con e
 Características
 
 - Registro y autenticación de médicos: Cada médico tiene su propio usuario y contraseña para acceder al sistema.
-- Gestión de pacientes: Los médicos pueden registrar, editar y eliminar pacientes.
+- Gestión de pacientes: Los administradores pueden registrar, editar y eliminar pacientes.
 - Citas médicas: Los médicos pueden agendar, ver y eliminar citas con los pacientes.
 - Compartir pacientes entre médicos: Los médicos pueden compartir pacientes entre sí para una atención más completa.
 - Visualización de citas por paciente: Los médicos pueden consultar el historial de citas de un paciente específico.
@@ -45,8 +45,7 @@ Ahora puedes acceder a la aplicación en http://127.0.0.1:8000.
 
 Uso
 
-1. Registro de médicos: Los médicos pueden registrarse a través de la interfaz de usuario. Después de iniciar sesión, podrán acceder a sus paneles personales.
-2. Gestión de pacientes: Los médicos pueden añadir pacientes con sus datos personales y de contacto.
-3. Agendar citas: Cada médico podrá ver el calendario de sus citas y agendar nuevas citas con los pacientes.
-4. Compartir pacientes: Un médico puede compartir un paciente con otro médico a través de su perfil de paciente.
-5. Historial de citas: Los médicos podrán consultar el historial de citas de cualquier paciente asignado a su cuenta.
+1. Después de iniciar sesión, los medicos podrán acceder a sus paneles personales.
+2. Agendar citas: Cada médico podrá ver el calendario de sus citas y agendar nuevas citas con los pacientes.
+3. Compartir pacientes: Un médico puede compartir un paciente con otro médico a través de su perfil de paciente.
+4. Historial de citas: Los médicos podrán consultar el historial de citas de cualquier paciente asignado a su cuenta.
