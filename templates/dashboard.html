@@ -180,6 +180,7 @@
                                             <p><strong>Paciente:</strong> {{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}</p>
                                             <p><span class="detail-label">Fecha y Hora:</span> <span class="detail-value">{{ cita.fecha|date:"l, d \d\e F \d\e Y - H:i" }}</span></p>
                                             <p><span class="detail-label">Motivo:</span> <span class="detail-value">{{ cita.motivo|truncatewords:15 }}</span></p>
+                                            <p><span class="detail-label">Observación:</span> <span class="detail-value">{{ cita.observaciones|truncatewords:15 }}</span></p>
                                             {# <p><a href="{% url 'detalle_cita' cita.id %}">Ver detalles</a></p> #}
                                         </li>
                                     {% endfor %}

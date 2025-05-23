@@ -1,9 +1,191 @@
-<h1>Crear Nueva Cita</h1>
+<!-- templates/crear_cita.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Nueva Cita - Dr(a). {{ request.user.get_full_name|default:request.user.username }}</title>
+    <!-- Aquí deberías enlazar a tu archivo CSS principal si lo tienes,
+         o copiar los estilos del dashboard.html si los quieres embebidos.
+         Para este ejemplo, asumiré que copias/pegas los estilos del dashboard
+         y añades los nuevos. -->
+    <style>
+        /* --- Reset Básico y Estilos Globales --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar Cita</button>
-</form>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f4f7f6; /* Un gris muy claro para el fondo */
+            color: #333;
+            padding: 20px;
+        }
 
-<a href="{% url 'doctor_dashboard' %}">Volver al Dashboard</a>
+        .container {
+            max-width: 900px; /* O más pequeño para formularios, ej: 700px */
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* --- Encabezados --- */
+        h1, h2, h3 {
+            color: #2c3e50; /* Un azul oscuro/grisáceo */
+            margin-bottom: 0.75em;
+        }
+        h1 { font-size: 2em; margin-bottom: 1em; text-align: center; }
+        h2 { font-size: 1.6em; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.3em; margin-top: 1.5em;}
+        h3 { font-size: 1.3em; color: #3498db; /* Un azul más brillante para la prioridad */ margin-top: 1.2em;}
+
+        /* --- Estilos para Botones (reutilizados de filter-controls) --- */
+        .button-style {
+            text-decoration: none;
+            padding: 10px 18px;
+            background-color: #3498db; /* Azul principal */
+            color: white;
+            border-radius: 5px;
+            margin: 0 5px;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+            border: none; /* Para que <button> se vea igual */
+            cursor: pointer; /* Para <button> */
+            font-size: 0.95em;
+        }
+        .button-style:hover {
+            background-color: #2980b9; /* Azul más oscuro al pasar el ratón */
+        }
+        .button-style.secondary {
+            background-color: #95a5a6; /* Gris para el botón "Mostrar desde Hoy" / "Volver" */
+        }
+        .button-style.secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .button-style.create-cita-link, /* Reutilizamos el estilo verde para guardar */
+        .button-style.submit-button { /* O una clase específica para el botón de guardar */
+            background-color: #2ecc71; /* Verde */
+        }
+        .button-style.create-cita-link:hover,
+        .button-style.submit-button:hover {
+            background-color: #27ae60; /* Verde oscuro */
+        }
+
+        /* --- Estilos para Formularios --- */
+        .styled-form {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .styled-form p { /* Django form.as_p wraps fields in <p> */
+            margin-bottom: 18px;
+        }
+
+        .styled-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057; /* Un gris oscuro para las etiquetas */
+        }
+
+        .styled-form input[type="text"],
+        .styled-form input[type="email"],
+        .styled-form input[type="password"], /* si aplica */
+        .styled-form input[type="number"], /* si aplica */
+        .styled-form input[type="date"],
+        .styled-form input[type="time"],
+        .styled-form input[type="datetime-local"],
+        .styled-form select,
+        .styled-form textarea {
+            width: 100%;
+            padding: 12px 15px; /* Un poco más de padding */
+            border: 1px solid #ced4da; /* Borde sutil */
+            border-radius: 5px;
+            font-size: 0.95em;
+            line-height: 1.5;
+            background-color: #fff;
+            color: #495057;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        .styled-form textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .styled-form input:focus,
+        .styled-form select:focus,
+        .styled-form textarea:focus {
+            border-color: #80bdff; /* Color de borde al enfocar (similar a Bootstrap) */
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        /* Si hay errores de validación del formulario Django */
+        .styled-form .errorlist {
+            list-style-type: none;
+            padding: 0;
+            margin: 0 0 10px 0;
+            color: #e74c3c; /* Rojo */
+            font-size: 0.9em;
+        }
+        .styled-form .errorlist li {
+            padding: 5px;
+            background-color: #fbeae5; /* Fondo rojo claro para errores */
+            border-left: 3px solid #e74c3c;
+            margin-bottom: 5px;
+        }
+
+        .form-actions {
+            margin-top: 25px;
+            display: flex; /* Para alinear botones */
+            gap: 10px; /* Espacio entre botones */
+            justify-content: flex-start; /* O flex-end si los quieres a la derecha */
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 700px;"> <!-- Contenedor un poco más pequeño para el form -->
+        <h1>Crear Nueva Cita</h1>
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            <!-- Renderizar campos individualmente para más control o usar {{ form.as_p }} -->
+            <!-- Ejemplo con form.as_p, los estilos de .styled-form p, label, input aplicarán -->
+            {{ form.as_p }}
+
+            <!-- Ejemplo si quieres renderizar campos manualmente (opcional):
+            {% for field in form %}
+                <div class="form-field">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <div class="alert alert-danger">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+            -->
+            {% if form.non_field_errors %}
+                <div class="non-field-errors">
+                    {% for error in form.non_field_errors %}
+                        <p class="error-message">{{ error }}</p> {# Añade clase error-message para estilizar errores generales #}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-actions">
+                <button type="submit" class="button-style submit-button">Guardar Cita</button>
+                <a href="{% url 'doctor_dashboard' %}" class="button-style secondary">Volver al Dashboard</a>
+            </div>
+        </form>
+
+    </div> <!-- Cierre de .container -->
+</body>
+</html>

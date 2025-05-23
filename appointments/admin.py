@@ -5,7 +5,7 @@ from .models import Appointment
 @admin.register(Appointment)
 class AppointmentAdmin(admin.ModelAdmin):
     list_display = ('paciente', 'doctor', 'fecha', 'motivo', 'observaciones', 'creada_en')
-    list_filter = ('doctor', 'fecha')  # Permite filtrar por doctor y fecha
+    list_filter = ('doctor', 'fecha', 'paciente')  # Permite filtrar por doctor y fecha
     search_fields = ('paciente__dni', 'doctor__nombre', 'doctor__apellidos', 'motivo')  # Buscable por paciente y doctor
     ordering = ('-fecha',)  # Orden por defecto por fecha, más reciente primero
 
