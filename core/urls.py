@@ -29,4 +29,6 @@ urlpatterns = [
     path('doctors/dashboard/', dashboard, name='doctor_dashboard'),  # Ruta para el dashboard del doctor
     path('logout/', LogoutView.as_view(), name='logout'),  # Añadir la ruta de cierre de sesión
     path('apointments/crear/', crear_cita, name='crear_cita'),
+    #apis
+    path('api/v1/appointments/', include('appointments.urls')),
 ]

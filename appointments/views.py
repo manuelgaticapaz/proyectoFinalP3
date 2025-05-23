@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from .forms import AppointmentForm
 from .models import Appointment
+from .serializers import AppointmentSerializaer
 from doctors.models import Doctor  # Importa el modelo Doctor para obtener el doctor logueado
+from rest_framework import viewsets
 
 @login_required
 def crear_cita(request):
@@ -19,3 +21,7 @@ def crear_cita(request):
         form = AppointmentForm()
     
     return render(request, 'crear_cita.html', {'form': form})
+
+class AppointmentsViewSet(viewsets.ModelViewSet):
+    queryset = Appointment.objects.all().order_by('-id') # Define el conjunto de datos base
+    serializer_class = AppointmentSerializaer

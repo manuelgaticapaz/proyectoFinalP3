@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'patients.apps.PatientsConfig', # O simplemente 'patients'
     'doctors.apps.DoctorsConfig',   # O simplemente 'doctors'
     'appointments.apps.AppointmentsConfig', # O simplemente 'appointments'
-    ##'rest_framework',
+    'rest_framework',
     ##'api',
 ]
 
