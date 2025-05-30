@@ -25,6 +25,7 @@ Asegúrate de tener instalados los siguientes programas en tu entorno:
 - Python 3.x
 - pip
 - Django
+- djangorestframework (para el uso de las APIs)
 
 Instalación
 
@@ -37,8 +38,11 @@ source venv/bin/activate  # En Linux o macOS
 
 venv\Scripts\activate     # En Windows
 
+3. Instala los requerimientos
 
-3. Inicia el servidor de desarrollo:
+pip install -r requirements.txt
+
+4. Inicia el servidor de desarrollo:
 
 python manage.py runserver
 
@@ -55,5 +59,7 @@ Uso
 Links apis:
 
 http://127.0.0.1:8000/api/v1/appointments/citas/
+
 http://127.0.0.1:8000/api/v1/doctors/doctor/
+
 http://127.0.0.1:8000/api/v1/patients/paciente/
