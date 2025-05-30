@@ -50,3 +50,10 @@ Uso
 2. Agendar citas: Cada médico podrá ver el calendario de sus citas y agendar nuevas citas con los pacientes.
 3. Compartir pacientes: Un médico puede compartir un paciente con otro médico a través de su perfil de paciente.
 4. Historial de citas: Los médicos podrán consultar el historial de citas de cualquier paciente asignado a su cuenta.
+
+
+Links apis:
+
+http://127.0.0.1:8000/api/v1/appointments/citas/
+http://127.0.0.1:8000/api/v1/doctors/doctor/
+http://127.0.0.1:8000/api/v1/patients/paciente/

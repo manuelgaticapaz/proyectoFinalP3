@@ -4,6 +4,8 @@ from django.utils import timezone # Para obtener la fecha actual con zona horari
 from datetime import timedelta, date
 from appointments.models import Appointment
 from .models import Doctor # Asegúrate que este es el modelo correcto para Doctor
+from rest_framework import viewsets
+from .serializers import DoctorsSerializaer
 
 @login_required
 def dashboard(request):
@@ -68,3 +70,7 @@ def dashboard(request):
     }
 
     return render(request, 'dashboard.html', context)
+
+class DoctorsViewSet(viewsets.ModelViewSet):
+    queryset = Doctor.objects.all().order_by('-id') # Define el conjunto de datos base
+    serializer_class = DoctorsSerializaer

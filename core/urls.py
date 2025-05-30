@@ -31,4 +31,6 @@ urlpatterns = [
     path('apointments/crear/', crear_cita, name='crear_cita'),
     #apis
     path('api/v1/appointments/', include('appointments.urls')),
+    path('api/v1/doctors/', include('doctors.urls')),
+    path('api/v1/patients/', include('patients.urls')),
 ]
