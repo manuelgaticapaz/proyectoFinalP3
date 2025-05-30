@@ -46,7 +46,8 @@ pip install -r requirements.txt
 
 python manage.py runserver
 
-Ahora puedes acceder a la aplicación en http://127.0.0.1:8000.
+Ahora puedes acceder a la aplicación en http://127.0.0.1:8000. 
+Tambien puedes acceder como administrador en http://127.0.0.1:8000/admin.
 
 Uso
 
