@@ -1,191 +1,437 @@
-<!-- templates/crear_cita.html -->
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Nueva Cita - Dr(a). {{ request.user.get_full_name|default:request.user.username }}</title>
-    <!-- Aquí deberías enlazar a tu archivo CSS principal si lo tienes,
-         o copiar los estilos del dashboard.html si los quieres embebidos.
-         Para este ejemplo, asumiré que copias/pegas los estilos del dashboard
-         y añades los nuevos. -->
-    <style>
-        /* --- Reset Básico y Estilos Globales --- */
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+{% extends 'base.html' %}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.6;
-            background-color: #f4f7f6; /* Un gris muy claro para el fondo */
-            color: #333;
-            padding: 20px;
-        }
+{% block title %}Crear Nueva Cita - MediCitas Pro{% endblock %}
 
-        .container {
-            max-width: 900px; /* O más pequeño para formularios, ej: 700px */
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
+{% block extra_css %}
+<style>
+    .form-floating > .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .form-floating > .form-control:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+    }
+    
+    .form-floating > label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .btn-create {
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    }
+    
+    .btn-cancel {
+        background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+    }
+    
+    .priority-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .priority-alta { background-color: #dc3545; }
+    .priority-media { background-color: #ffc107; }
+    .priority-baja { background-color: #28a745; }
+    .priority-urgente { background-color: #fd7e14; }
+    
+    .datetime-container {
+        position: relative;
+    }
+    
+    .datetime-helper {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #4facfe;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
 
-        /* --- Encabezados --- */
-        h1, h2, h3 {
-            color: #2c3e50; /* Un azul oscuro/grisáceo */
-            margin-bottom: 0.75em;
-        }
-        h1 { font-size: 2em; margin-bottom: 1em; text-align: center; }
-        h2 { font-size: 1.6em; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.3em; margin-top: 1.5em;}
-        h3 { font-size: 1.3em; color: #3498db; /* Un azul más brillante para la prioridad */ margin-top: 1.2em;}
-
-        /* --- Estilos para Botones (reutilizados de filter-controls) --- */
-        .button-style {
-            text-decoration: none;
-            padding: 10px 18px;
-            background-color: #3498db; /* Azul principal */
-            color: white;
-            border-radius: 5px;
-            margin: 0 5px;
-            display: inline-block;
-            transition: background-color 0.3s ease;
-            border: none; /* Para que <button> se vea igual */
-            cursor: pointer; /* Para <button> */
-            font-size: 0.95em;
-        }
-        .button-style:hover {
-            background-color: #2980b9; /* Azul más oscuro al pasar el ratón */
-        }
-        .button-style.secondary {
-            background-color: #95a5a6; /* Gris para el botón "Mostrar desde Hoy" / "Volver" */
-        }
-        .button-style.secondary:hover {
-            background-color: #7f8c8d;
-        }
-        .button-style.create-cita-link, /* Reutilizamos el estilo verde para guardar */
-        .button-style.submit-button { /* O una clase específica para el botón de guardar */
-            background-color: #2ecc71; /* Verde */
-        }
-        .button-style.create-cita-link:hover,
-        .button-style.submit-button:hover {
-            background-color: #27ae60; /* Verde oscuro */
-        }
-
-        /* --- Estilos para Formularios --- */
-        .styled-form {
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-
-        .styled-form p { /* Django form.as_p wraps fields in <p> */
-            margin-bottom: 18px;
-        }
-
-        .styled-form label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #495057; /* Un gris oscuro para las etiquetas */
-        }
-
-        .styled-form input[type="text"],
-        .styled-form input[type="email"],
-        .styled-form input[type="password"], /* si aplica */
-        .styled-form input[type="number"], /* si aplica */
-        .styled-form input[type="date"],
-        .styled-form input[type="time"],
-        .styled-form input[type="datetime-local"],
-        .styled-form select,
-        .styled-form textarea {
-            width: 100%;
-            padding: 12px 15px; /* Un poco más de padding */
-            border: 1px solid #ced4da; /* Borde sutil */
-            border-radius: 5px;
-            font-size: 0.95em;
-            line-height: 1.5;
-            background-color: #fff;
-            color: #495057;
-            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-        .styled-form textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .styled-form input:focus,
-        .styled-form select:focus,
-        .styled-form textarea:focus {
-            border-color: #80bdff; /* Color de borde al enfocar (similar a Bootstrap) */
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-            outline: none;
-        }
-
-        /* Si hay errores de validación del formulario Django */
-        .styled-form .errorlist {
-            list-style-type: none;
-            padding: 0;
-            margin: 0 0 10px 0;
-            color: #e74c3c; /* Rojo */
-            font-size: 0.9em;
-        }
-        .styled-form .errorlist li {
-            padding: 5px;
-            background-color: #fbeae5; /* Fondo rojo claro para errores */
-            border-left: 3px solid #e74c3c;
-            margin-bottom: 5px;
-        }
-
-        .form-actions {
-            margin-top: 25px;
-            display: flex; /* Para alinear botones */
-            gap: 10px; /* Espacio entre botones */
-            justify-content: flex-start; /* O flex-end si los quieres a la derecha */
-        }
-    </style>
-</head>
-<body>
-    <div class="container" style="max-width: 700px;"> <!-- Contenedor un poco más pequeño para el form -->
-        <h1>Crear Nueva Cita</h1>
-
-        <form method="post" class="styled-form">
-            {% csrf_token %}
-
-            <!-- Renderizar campos individualmente para más control o usar {{ form.as_p }} -->
-            <!-- Ejemplo con form.as_p, los estilos de .styled-form p, label, input aplicarán -->
-            {{ form.as_p }}
-
-            <!-- Ejemplo si quieres renderizar campos manualmente (opcional):
-            {% for field in form %}
-                <div class="form-field">
-                    {{ field.label_tag }}
-                    {{ field }}
-                    {% if field.help_text %}
-                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                    {% endif %}
-                    {% for error in field.errors %}
-                        <div class="alert alert-danger">{{ error }}</div>
-                    {% endfor %}
-                </div>
-            {% endfor %}
-            -->
-            {% if form.non_field_errors %}
-                <div class="non-field-errors">
-                    {% for error in form.non_field_errors %}
-                        <p class="error-message">{{ error }}</p> {# Añade clase error-message para estilizar errores generales #}
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <div class="form-actions">
-                <button type="submit" class="button-style submit-button">Guardar Cita</button>
-                <a href="{% url 'doctor_dashboard' %}" class="button-style secondary">Volver al Dashboard</a>
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header Card -->
+        <div class="card card-custom mb-4">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">
+                    <i class="bi bi-calendar-plus"></i> Crear Nueva Cita Médica
+                </h3>
             </div>
-        </form>
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    Complete el formulario para agendar una nueva cita médica. Los campos marcados con (*) son obligatorios.
+                </p>
+            </div>
+        </div>
 
-    </div> <!-- Cierre de .container -->
-</body>
-</html>
+        <!-- Form Card -->
+        <div class="card card-custom">
+            <div class="card-body">
+                {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error en el formulario:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field|title }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endif %}
+
+                <form method="post" id="citaForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Patient Information Section -->
+                    <div class="form-section">
+                        <h5 class="mb-3">
+                            <i class="bi bi-person"></i> Información del Paciente
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-floating">
+                                    {{ form.paciente }}
+                                    <label for="{{ form.paciente.id_for_label }}" class="required-field">
+                                        <i class="bi bi-person-circle"></i> Seleccionar Paciente
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-lightbulb"></i> 
+                                    Seleccione el paciente de la lista desplegable
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appointment Details Section -->
+                    <div class="form-section">
+                        <h5 class="mb-3">
+                            <i class="bi bi-calendar-event"></i> Detalles de la Cita
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating datetime-container">
+                                    {{ form.fecha }}
+                                    <label for="{{ form.fecha.id_for_label }}" class="required-field">
+                                        <i class="bi bi-calendar3"></i> Fecha y Hora
+                                    </label>
+                                </div>
+                                <div class="datetime-helper">
+                                    <i class="bi bi-clock"></i> 
+                                    Formato: DD/MM/AAAA HH:MM
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" readonly 
+                                           value="{% if editing %}Dr(a). {{ cita.doctor.nombre }} {{ cita.doctor.apellidos }}{% else %}Dr(a). {{ doctor.nombre }} {{ doctor.apellidos }}{% endif %}">
+                                    <label>
+                                        <i class="bi bi-person-badge"></i> Doctor Asignado
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Doctor responsable de la cita (asignado automáticamente)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical Information Section -->
+                    <div class="form-section">
+                        <h5 class="mb-3">
+                            <i class="bi bi-clipboard2-pulse"></i> Información Médica
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-floating">
+                                    {{ form.motivo }}
+                                    <label for="{{ form.motivo.id_for_label }}" class="required-field">
+                                        <i class="bi bi-chat-dots"></i> Motivo de la Consulta
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-pencil"></i> 
+                                    Describa brevemente el motivo de la consulta médica
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-12 mb-3">
+                                <div class="form-floating">
+                                    {{ form.observaciones }}
+                                    <label for="{{ form.observaciones.id_for_label }}">
+                                        <i class="bi bi-journal-text"></i> Observaciones Adicionales
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info"></i> 
+                                    Información adicional relevante para la cita (opcional)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'doctor_dashboard' %}" class="btn btn-secondary btn-cancel">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="clearForm()">
+                                <i class="bi bi-arrow-clockwise"></i> Limpiar
+                            </button>
+                            <button type="submit" class="btn btn-success btn-create">
+                                <i class="bi bi-check-circle"></i>
+                                <span class="button-text">Crear Cita</span>
+                                <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                                    <span class="visually-hidden">Guardando...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Quick Tips Card -->
+        <div class="card card-custom mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Consejos Rápidos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Verifique la disponibilidad del horario
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Confirme los datos del paciente
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Incluya motivo específico de consulta
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Agregue observaciones si es necesario
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation and enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('citaForm');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        
+        // Form submission with loading state
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Show validation errors
+                const firstInvalidField = form.querySelector(':invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                // Show loading state
+                const buttonText = submitBtn.querySelector('.button-text');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                
+                submitBtn.disabled = true;
+                buttonText.textContent = 'Guardando...';
+                spinner.classList.remove('d-none');
+            }
+            
+            form.classList.add('was-validated');
+        });
+
+        // Date/time input enhancement
+        const fechaInput = document.getElementById('{{ form.fecha.id_for_label }}');
+        if (fechaInput) {
+            // Set minimum date to today
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            fechaInput.min = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            // Add validation for business hours
+            fechaInput.addEventListener('change', function() {
+                const selectedDate = new Date(this.value);
+                const hour = selectedDate.getHours();
+                
+                if (hour < 8 || hour > 18) {
+                    this.setCustomValidity('Por favor seleccione un horario entre 8:00 AM y 6:00 PM');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        }
+
+        // Auto-resize textareas
+        const textareas = form.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+
+        // Add floating label animation
+        const floatingInputs = form.querySelectorAll('.form-floating input, .form-floating select, .form-floating textarea');
+        floatingInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.parentElement.classList.remove('focused');
+                }
+            });
+        });
+    });
+
+    // Clear form function
+    function clearForm() {
+        if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
+            document.getElementById('citaForm').reset();
+            document.getElementById('citaForm').classList.remove('was-validated');
+            
+            // Reset floating labels
+            document.querySelectorAll('.form-floating').forEach(floating => {
+                floating.classList.remove('focused');
+            });
+        }
+    }
+
+    // Auto-save draft (optional feature)
+    let autoSaveTimer;
+    function autoSaveDraft() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            const formData = new FormData(document.getElementById('citaForm'));
+            const draftData = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'csrfmiddlewaretoken' && value.trim() !== '') {
+                    draftData[key] = value;
+                }
+            }
+            
+            if (Object.keys(draftData).length > 0) {
+                localStorage.setItem('citaDraft', JSON.stringify(draftData));
+            }
+        }, 2000);
+    }
+
+    // Load draft on page load
+    window.addEventListener('load', function() {
+        const draft = localStorage.getItem('citaDraft');
+        if (draft) {
+            const draftData = JSON.parse(draft);
+            
+            if (confirm('Se encontró un borrador guardado. ¿Desea recuperarlo?')) {
+                Object.keys(draftData).forEach(key => {
+                    const field = document.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        field.value = draftData[key];
+                        if (field.parentElement.classList.contains('form-floating')) {
+                            field.parentElement.classList.add('focused');
+                        }
+                    }
+                });
+            } else {
+                localStorage.removeItem('citaDraft');
+            }
+        }
+    });
+
+    // Clear draft on successful submission
+    document.getElementById('citaForm').addEventListener('submit', function() {
+        if (this.checkValidity()) {
+            localStorage.removeItem('citaDraft');
+        }
+    });
+
+    // Add auto-save listeners
+    document.querySelectorAll('#citaForm input, #citaForm select, #citaForm textarea').forEach(field => {
+        field.addEventListener('input', autoSaveDraft);
+        field.addEventListener('change', autoSaveDraft);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if editing %}Editar{% else %}Crear{% endif %} Paciente - MediCitas Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-floating > .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .form-floating > .form-control:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+    }
+    
+    .form-floating > label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .btn-save {
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    }
+    
+    .btn-cancel {
+        background: linear-gradient(90deg, #6c757d 0%, #495057 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+    }
+    
+    .priority-indicator {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+    
+    .priority-urgent { background-color: #dc3545; }
+    .priority-high { background-color: #fd7e14; }
+    .priority-medium { background-color: #ffc107; }
+    .priority-low { background-color: #28a745; }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #4facfe;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .age-display {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-weight: 500;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Header Card -->
+        <div class="card card-custom mb-4">
+            <div class="card-header {% if editing %}bg-warning{% else %}bg-success{% endif %} text-white">
+                <h3 class="mb-0">
+                    <i class="bi bi-{% if editing %}pencil{% else %}person-plus{% endif %}"></i> 
+                    {% if editing %}Editar Paciente{% else %}Crear Nuevo Paciente{% endif %}
+                </h3>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-0">
+                    <i class="bi bi-info-circle"></i>
+                    {% if editing %}
+                        Modifique la información del paciente. Los campos marcados con (*) son obligatorios.
+                    {% else %}
+                        Complete la información del nuevo paciente. Los campos marcados con (*) son obligatorios.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Form Card -->
+        <div class="card card-custom">
+            <div class="card-body">
+                {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error en el formulario:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ field|title }}: {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endif %}
+
+                <form method="post" id="patientForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Personal Information Section -->
+                    <div class="form-section">
+                        <h5 class="mb-3">
+                            <i class="bi bi-person"></i> Información Personal
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    {{ form.nombre }}
+                                    <label for="{{ form.nombre.id_for_label }}" class="required-field">
+                                        <i class="bi bi-person-circle"></i> Nombre
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-lightbulb"></i> 
+                                    Nombre(s) del paciente
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    {{ form.apellidos }}
+                                    <label for="{{ form.apellidos.id_for_label }}" class="required-field">
+                                        <i class="bi bi-person-lines-fill"></i> Apellidos
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-lightbulb"></i> 
+                                    Apellidos del paciente
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    {{ form.dni }}
+                                    <label for="{{ form.dni.id_for_label }}" class="required-field">
+                                        <i class="bi bi-card-text"></i> DNI/Cédula
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-shield-check"></i> 
+                                    Documento de identidad único
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-floating">
+                                    {{ form.fecha_nacimiento }}
+                                    <label for="{{ form.fecha_nacimiento.id_for_label }}">
+                                        <i class="bi bi-calendar3"></i> Fecha de Nacimiento
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Para calcular la edad automáticamente
+                                </div>
+                                <div id="ageDisplay" class="age-display mt-2 d-none">
+                                    <i class="bi bi-hourglass-split"></i> Edad: <span id="calculatedAge">--</span> años
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Medical Information Section -->
+                    <div class="form-section">
+                        <h5 class="mb-3">
+                            <i class="bi bi-clipboard2-pulse"></i> Información Médica
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-floating">
+                                    {{ form.prioridad }}
+                                    <label for="{{ form.prioridad.id_for_label }}">
+                                        <i class="bi bi-exclamation-triangle"></i> Prioridad Médica
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Nivel de prioridad para la atención médica
+                                </div>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <span class="priority-indicator priority-urgent"></span> Urgente: Requiere atención inmediata<br>
+                                        <span class="priority-indicator priority-high"></span> Alta: Prioridad alta en agenda<br>
+                                        <span class="priority-indicator priority-medium"></span> Media: Atención regular<br>
+                                        <span class="priority-indicator priority-low"></span> Baja: Chequeos rutinarios
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-floating">
+                                    {{ form.historial_medico_basico }}
+                                    <label for="{{ form.historial_medico_basico.id_for_label }}">
+                                        <i class="bi bi-journal-medical"></i> Historial Médico Básico
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-pencil"></i> 
+                                    Alergias, condiciones preexistentes, medicación actual, etc.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="form-section">
+                        <h5 class="mb-3">
+                            <i class="bi bi-telephone"></i> Información de Contacto
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-floating">
+                                    {{ form.informacion_contacto }}
+                                    <label for="{{ form.informacion_contacto.id_for_label }}">
+                                        <i class="bi bi-person-lines-fill"></i> Información de Contacto
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <i class="bi bi-info"></i> 
+                                    Teléfono, email, dirección, contacto de emergencia, etc.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'patient_dashboard' %}" class="btn btn-secondary btn-cancel">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" onclick="clearForm()">
+                                <i class="bi bi-arrow-clockwise"></i> Limpiar
+                            </button>
+                            <button type="submit" class="btn btn-success btn-save">
+                                <i class="bi bi-{% if editing %}check-circle{% else %}person-plus{% endif %}"></i>
+                                <span class="button-text">{% if editing %}Actualizar{% else %}Crear{% endif %} Paciente</span>
+                                <div class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                                    <span class="visually-hidden">Guardando...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tips Card -->
+        <div class="card card-custom mt-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Consejos para el Registro
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Verifique que el DNI sea único y correcto
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Complete la información de contacto
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Incluya alergias e información médica relevante
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-check-circle text-success"></i>
+                                Seleccione la prioridad médica apropiada
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Form validation and enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('patientForm');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const birthDateInput = document.getElementById('{{ form.fecha_nacimiento.id_for_label }}');
+        
+        // Form submission with loading state
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Show validation errors
+                const firstInvalidField = form.querySelector(':invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else {
+                // Show loading state
+                const buttonText = submitBtn.querySelector('.button-text');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                
+                submitBtn.disabled = true;
+                buttonText.textContent = 'Guardando...';
+                spinner.classList.remove('d-none');
+            }
+            
+            form.classList.add('was-validated');
+        });
+
+        // Age calculation
+        if (birthDateInput) {
+            birthDateInput.addEventListener('change', calculateAge);
+            
+            // Calculate age on page load if date exists
+            if (birthDateInput.value) {
+                calculateAge();
+            }
+        }
+        
+        function calculateAge() {
+            const birthDate = new Date(birthDateInput.value);
+            const today = new Date();
+            
+            if (birthDate && birthDate <= today) {
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+                
+                if (age >= 0 && age <= 120) {
+                    document.getElementById('calculatedAge').textContent = age;
+                    document.getElementById('ageDisplay').classList.remove('d-none');
+                } else {
+                    document.getElementById('ageDisplay').classList.add('d-none');
+                }
+            } else {
+                document.getElementById('ageDisplay').classList.add('d-none');
+            }
+        }
+
+        // Auto-resize textareas
+        const textareas = form.querySelectorAll('textarea');
+        textareas.forEach(textarea => {
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+
+        // Add floating label animation
+        const floatingInputs = form.querySelectorAll('.form-floating input, .form-floating select, .form-floating textarea');
+        floatingInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                if (!this.value) {
+                    this.parentElement.classList.remove('focused');
+                }
+            });
+        });
+
+        // DNI formatting
+        const dniInput = document.getElementById('{{ form.dni.id_for_label }}');
+        if (dniInput) {
+            dniInput.addEventListener('input', function() {
+                // Remove spaces and convert to uppercase
+                this.value = this.value.replace(/\s/g, '').toUpperCase();
+            });
+        }
+
+        // Name formatting
+        const nameInputs = [
+            document.getElementById('{{ form.nombre.id_for_label }}'),
+            document.getElementById('{{ form.apellidos.id_for_label }}')
+        ];
+        
+        nameInputs.forEach(input => {
+            if (input) {
+                input.addEventListener('blur', function() {
+                    // Title case formatting
+                    this.value = this.value.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                });
+            }
+        });
+    });
+
+    // Clear form function
+    function clearForm() {
+        if (confirm('¿Está seguro de que desea limpiar todos los campos del formulario?')) {
+            document.getElementById('patientForm').reset();
+            document.getElementById('patientForm').classList.remove('was-validated');
+            document.getElementById('ageDisplay').classList.add('d-none');
+            
+            // Reset floating labels
+            document.querySelectorAll('.form-floating').forEach(floating => {
+                floating.classList.remove('focused');
+            });
+        }
+    }
+
+    // Auto-save draft (optional feature)
+    let autoSaveTimer;
+    function autoSaveDraft() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            const formData = new FormData(document.getElementById('patientForm'));
+            const draftData = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key !== 'csrfmiddlewaretoken' && value.trim() !== '') {
+                    draftData[key] = value;
+                }
+            }
+            
+            if (Object.keys(draftData).length > 0) {
+                localStorage.setItem('patientDraft', JSON.stringify(draftData));
+            }
+        }, 2000);
+    }
+
+    // Load draft on page load (only for new patients)
+    {% if not editing %}
+    window.addEventListener('load', function() {
+        const draft = localStorage.getItem('patientDraft');
+        if (draft) {
+            const draftData = JSON.parse(draft);
+            
+            if (confirm('Se encontró un borrador guardado. ¿Desea recuperarlo?')) {
+                Object.keys(draftData).forEach(key => {
+                    const field = document.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        field.value = draftData[key];
+                        if (field.parentElement.classList.contains('form-floating')) {
+                            field.parentElement.classList.add('focused');
+                        }
+                        
+                        // Trigger age calculation if birth date
+                        if (key === 'fecha_nacimiento') {
+                            field.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+            } else {
+                localStorage.removeItem('patientDraft');
+            }
+        }
+    });
+    {% endif %}
+
+    // Clear draft on successful submission
+    document.getElementById('patientForm').addEventListener('submit', function() {
+        if (this.checkValidity()) {
+            localStorage.removeItem('patientDraft');
+        }
+    });
+
+    // Add auto-save listeners (only for new patients)
+    {% if not editing %}
+    document.querySelectorAll('#patientForm input, #patientForm select, #patientForm textarea').forEach(field => {
+        field.addEventListener('input', autoSaveDraft);
+        field.addEventListener('change', autoSaveDraft);
+    });
+    {% endif %}
+</script>
+{% endblock %}

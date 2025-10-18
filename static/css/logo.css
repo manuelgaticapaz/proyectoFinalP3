@@ -1,0 +1,206 @@
+/* MediCitas Pro - Logo 3D Profesional */
+
+.logo-3d-container {
+    perspective: 1000px;
+    display: inline-block;
+    margin: 20px;
+}
+
+.logo-3d {
+    position: relative;
+    width: 300px;
+    height: 120px;
+    transform-style: preserve-3d;
+    transition: transform 0.6s ease;
+    cursor: pointer;
+}
+
+.logo-3d:hover {
+    transform: rotateX(10deg) rotateY(15deg) scale(1.05);
+}
+
+.logo-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #4facfe 100%);
+    border-radius: 20px;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    transform: translateZ(0);
+}
+
+.logo-background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%);
+    border-radius: 20px;
+    transform: translateZ(1px);
+}
+
+.logo-icon {
+    position: absolute;
+    top: 20px;
+    left: 30px;
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #4facfe;
+    box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.8);
+    transform: translateZ(10px);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.logo-text {
+    position: absolute;
+    top: 25px;
+    left: 110px;
+    right: 20px;
+    transform: translateZ(5px);
+}
+
+.logo-title {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 
+        2px 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 10px rgba(255, 255, 255, 0.2);
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+.logo-subtitle {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    margin: 5px 0 0 0;
+    letter-spacing: 0.5px;
+}
+
+.logo-glow {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: linear-gradient(135deg, #667eea, #764ba2, #4facfe);
+    border-radius: 30px;
+    opacity: 0.3;
+    filter: blur(15px);
+    transform: translateZ(-5px);
+    animation: glow 3s ease-in-out infinite alternate;
+}
+
+/* Animaciones */
+@keyframes pulse {
+    0%, 100% { transform: translateZ(10px) scale(1); }
+    50% { transform: translateZ(15px) scale(1.1); }
+}
+
+@keyframes glow {
+    0% { opacity: 0.2; transform: translateZ(-5px) scale(0.95); }
+    100% { opacity: 0.4; transform: translateZ(-5px) scale(1.05); }
+}
+
+/* Logo compacto para navbar */
+.logo-compact {
+    width: 200px;
+    height: 50px;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+}
+
+.logo-compact:hover {
+    transform: rotateY(5deg) scale(1.02);
+}
+
+.logo-compact .logo-background {
+    height: 50px;
+    border-radius: 12px;
+}
+
+.logo-compact .logo-icon {
+    width: 30px;
+    height: 30px;
+    top: 10px;
+    left: 15px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+
+.logo-compact .logo-text {
+    top: 8px;
+    left: 55px;
+}
+
+.logo-compact .logo-title {
+    font-size: 18px;
+    margin: 0;
+}
+
+.logo-compact .logo-subtitle {
+    font-size: 10px;
+    margin: 2px 0 0 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .logo-3d {
+        width: 250px;
+        height: 100px;
+    }
+    
+    .logo-title {
+        font-size: 26px;
+    }
+    
+    .logo-subtitle {
+        font-size: 12px;
+    }
+}
+
+/* Logo para login page */
+.logo-login {
+    width: 350px;
+    height: 140px;
+    margin: 0 auto 30px;
+}
+
+.logo-login .logo-background {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 30%, #4facfe 70%, #00d4ff 100%);
+    box-shadow: 
+        0 25px 50px rgba(0, 0, 0, 0.4),
+        inset 0 3px 6px rgba(255, 255, 255, 0.3);
+}
+
+.logo-login .logo-icon {
+    width: 70px;
+    height: 70px;
+    font-size: 32px;
+    top: 35px;
+    left: 40px;
+}
+
+.logo-login .logo-title {
+    font-size: 36px;
+}
+
+.logo-login .logo-subtitle {
+    font-size: 16px;
+}

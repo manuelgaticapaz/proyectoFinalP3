@@ -1,17 +1,27 @@
 # appointments/urls.py
 
-from django.urls import path, include # Necesitas 'include' aquí también
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import AppointmentsViewSet # Asegúrate de que el nombre de tu ViewSet sea este o cámbialo
+from .views import (
+    AppointmentsViewSet, 
+    crear_cita, 
+    editar_cita, 
+    eliminar_cita, 
+    check_appointment_availability
+)
 
-# Creamos un router y registramos nuestro ViewSet con él.
+# API Router
 router = DefaultRouter()
-# El primer argumento 'citas' será el prefijo para los endpoints de esta app.
-# Por ejemplo: /api/appointments/citas/ y /api/appointments/citas/<pk>/
-# 'basename' es opcional si tienes un queryset definido en el ViewSet, pero es buena práctica.
 router.register(r'citas', AppointmentsViewSet, basename='appointment')
 
-# Las URLs de la API son ahora determinadas automáticamente por el router.
+# Web URLs
 urlpatterns = [
-    path('', include(router.urls)), # Incluimos las URLs generadas por el router
+    # Web views
+    path('crear/', crear_cita, name='crear_cita'),
+    path('editar/<int:cita_id>/', editar_cita, name='editar_cita'),
+    path('eliminar/<int:cita_id>/', eliminar_cita, name='eliminar_cita'),
+    path('check-availability/', check_appointment_availability, name='check_appointment_availability'),
+    
+    # API endpoints
+    path('api/', include(router.urls)),
 ]

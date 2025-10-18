@@ -1,0 +1,89 @@
+<!DOCTYPE html> 
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar sesión</title>
+    <style>
+        body {
+            background: #f0f0f0;
+            font-family: system-ui, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .login-container {
+            width: 320px;
+            margin: 100px auto;
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 30px 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            background: #2c5282;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #2b6cb0;
+        }
+
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Inicio de sesión</h2>
+
+        {% if form.errors %}
+            <p class="error-message">Usuario o contraseña incorrectos.</p>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <label for="id_username">Usuario:</label>
+            {{ form.username }}
+
+            <label for="id_password">Contraseña:</label>
+            {{ form.password }}
+
+            <button type="submit">Ingresar</button>
+        </form>
+    </div>
+</body>
+</html>

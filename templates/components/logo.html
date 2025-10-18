@@ -1,0 +1,93 @@
+<!-- MediCitas Pro - Logo 3D Component -->
+<div class="logo-3d-container">
+    <div class="logo-3d {% if compact %}logo-compact{% endif %} {% if login_page %}logo-login{% endif %}">
+        <!-- Glow effect -->
+        <div class="logo-glow"></div>
+        
+        <!-- Background with gradient -->
+        <div class="logo-background"></div>
+        
+        <!-- Medical icon -->
+        <div class="logo-icon">
+            <i class="bi bi-hospital"></i>
+        </div>
+        
+        <!-- Text content -->
+        <div class="logo-text">
+            <h1 class="logo-title">MediCitas Pro</h1>
+            <p class="logo-subtitle">Sistema de Gestión de Citas Médicas</p>
+        </div>
+    </div>
+</div>
+
+<!-- Alternative SVG Logo for high quality -->
+<div class="logo-svg-container d-none">
+    <svg width="300" height="120" viewBox="0 0 300 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- Gradient definitions -->
+        <defs>
+            <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#4facfe;stop-opacity:1" />
+            </linearGradient>
+            
+            <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.9" />
+                <stop offset="100%" style="stop-color:#f8f9fa;stop-opacity:0.8" />
+            </linearGradient>
+            
+            <!-- Shadow filter -->
+            <filter id="dropshadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="3"/>
+                <feOffset dx="2" dy="4" result="offset" />
+                <feComponentTransfer>
+                    <feFuncA type="linear" slope="0.3"/>
+                </feComponentTransfer>
+                <feMerge> 
+                    <feMergeNode/>
+                    <feMergeNode in="SourceGraphic"/> 
+                </feMerge>
+            </filter>
+        </defs>
+        
+        <!-- Main background -->
+        <rect x="10" y="10" width="280" height="100" rx="20" ry="20" 
+              fill="url(#logoGradient)" 
+              filter="url(#dropshadow)"/>
+        
+        <!-- Icon background -->
+        <rect x="30" y="30" width="60" height="60" rx="15" ry="15" 
+              fill="url(#iconGradient)" 
+              filter="url(#dropshadow)"/>
+        
+        <!-- Medical cross icon -->
+        <g transform="translate(60, 60)">
+            <!-- Vertical bar -->
+            <rect x="-3" y="-15" width="6" height="30" fill="#4facfe" rx="3"/>
+            <!-- Horizontal bar -->
+            <rect x="-15" y="-3" width="30" height="6" fill="#4facfe" rx="3"/>
+            <!-- Plus symbol enhancement -->
+            <circle cx="0" cy="0" r="18" fill="none" stroke="#4facfe" stroke-width="2" opacity="0.3"/>
+        </g>
+        
+        <!-- Text -->
+        <text x="110" y="45" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="white">
+            MediCitas Pro
+        </text>
+        <text x="110" y="65" font-family="Arial, sans-serif" font-size="12" fill="rgba(255,255,255,0.9)">
+            Sistema de Gestión de Citas Médicas
+        </text>
+    </svg>
+</div>
+
+<style>
+/* Component-specific styles */
+.logo-svg-container svg {
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+    transition: transform 0.3s ease;
+}
+
+.logo-svg-container:hover svg {
+    transform: scale(1.05) rotateY(5deg);
+}
+</style>

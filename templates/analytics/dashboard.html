@@ -1,0 +1,577 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics Dashboard - MediCitas Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        transition: transform 0.3s ease;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card.primary { border-left-color: #007bff; }
+    .stat-card.success { border-left-color: #28a745; }
+    .stat-card.warning { border-left-color: #ffc107; }
+    .stat-card.danger { border-left-color: #dc3545; }
+    .stat-card.info { border-left-color: #17a2b8; }
+    
+    .date-filter {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .performance-indicator {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .trend-up { color: #28a745; }
+    .trend-down { color: #dc3545; }
+    .trend-stable { color: #6c757d; }
+    
+    .table-analytics {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .priority-urgent { background-color: #dc3545; color: white; }
+    .priority-high { background-color: #fd7e14; color: white; }
+    .priority-medium { background-color: #ffc107; color: black; }
+    .priority-low { background-color: #28a745; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-graph-up"></i> Analytics Dashboard
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Dr(a). {{ doctor.nombre }} {{ doctor.apellidos }} - {{ doctor.especialidad }}
+                    </p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" onclick="exportReport()">
+                        <i class="bi bi-download"></i> Exportar Reporte
+                    </button>
+                    <a href="{% url 'patient_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-people"></i> Gestión Pacientes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="date-filter">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
+            <div class="col-md-4">
+                <div class="btn-group w-100" role="group">
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(7)">7 días</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(30)">30 días</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(90)">90 días</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(365)">1 año</button>
+                </div>
+            </div>
+        </form>
+        
+        {% if not using_stored_procedures %}
+            <div class="alert alert-warning mt-3" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <strong>Modo básico:</strong> Para analytics avanzados ejecute: <code>python manage.py create_stored_procedures</code>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="performance-indicator">{{ doctor_stats.total_appointments|default:0 }}</div>
+                        <div class="text-muted">Total Citas</div>
+                    </div>
+                    <i class="bi bi-calendar-check display-4 text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="performance-indicator">{{ doctor_stats.today_appointments|default:0 }}</div>
+                        <div class="text-muted">Hoy</div>
+                    </div>
+                    <i class="bi bi-calendar-day display-4 text-success opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="performance-indicator">{{ doctor_stats.week_appointments|default:0 }}</div>
+                        <div class="text-muted">Esta Semana</div>
+                    </div>
+                    <i class="bi bi-calendar-week display-4 text-warning opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="performance-indicator">{{ doctor_stats.total_patients|default:0 }}</div>
+                        <div class="text-muted">Pacientes</div>
+                    </div>
+                    <i class="bi bi-people display-4 text-info opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stat-card danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="performance-indicator">{{ doctor_stats.upcoming_appointments|default:0 }}</div>
+                        <div class="text-muted">Próximas</div>
+                    </div>
+                    <i class="bi bi-calendar-plus display-4 text-danger opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="performance-indicator">{{ date_range_days }}</div>
+                        <div class="text-muted">Días Analizados</div>
+                    </div>
+                    <i class="bi bi-calendar-range display-4 text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="bi bi-bar-chart"></i> Citas por Día
+                </h5>
+                <canvas id="appointmentsByDayChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="col-lg-6 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="bi bi-pie-chart"></i> Distribución por Prioridad
+                </h5>
+                <canvas id="priorityDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-lg-12 mb-4">
+            <div class="chart-container">
+                <h5 class="mb-3">
+                    <i class="bi bi-clock"></i> Distribución de Citas por Hora
+                </h5>
+                <canvas id="appointmentsByHourChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Tables -->
+    <div class="row">
+        {% if patient_stats %}
+            <div class="col-lg-8 mb-4">
+                <div class="table-analytics">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-trophy"></i> Top Pacientes por Actividad
+                        </h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Paciente</th>
+                                    <th>DNI</th>
+                                    <th>Edad</th>
+                                    <th>Prioridad</th>
+                                    <th>Total Citas</th>
+                                    <th>Última Cita</th>
+                                    <th>Próximas</th>
+                                    <th>Completadas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for patient in patient_stats %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ patient.nombre }} {{ patient.apellidos }}</strong>
+                                        </td>
+                                        <td>{{ patient.dni }}</td>
+                                        <td>{{ patient.age|default:"N/A" }} años</td>
+                                        <td>
+                                            <span class="badge priority-{% if patient.prioridad == 'U' %}urgent{% elif patient.prioridad == 'A' %}high{% elif patient.prioridad == 'M' %}medium{% else %}low{% endif %}">
+                                                {% if patient.prioridad == 'U' %}Urgente
+                                                {% elif patient.prioridad == 'A' %}Alta
+                                                {% elif patient.prioridad == 'M' %}Media
+                                                {% else %}Baja{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ patient.total_appointments }}</span>
+                                        </td>
+                                        <td>
+                                            {% if patient.last_appointment %}
+                                                {{ patient.last_appointment|date:"d/m/Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Sin citas</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">{{ patient.upcoming_appointments|default:0 }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ patient.completed_appointments|default:0 }}</span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-speedometer2"></i> Métricas de Rendimiento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if using_stored_procedures %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Promedio Citas/Día:</span>
+                                <strong>{{ doctor_stats.avg_appointments_per_day|default:0|floatformat:1 }}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Citas Urgentes:</span>
+                                <strong class="text-danger">{{ doctor_stats.urgent_appointments|default:0 }}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Citas Alta Prioridad:</span>
+                                <strong class="text-warning">{{ doctor_stats.high_priority_appointments|default:0 }}</strong>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Citas Este Mes:</span>
+                                <strong class="text-info">{{ doctor_stats.month_appointments|default:0 }}</strong>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="bi bi-info-circle display-4 mb-2"></i>
+                            <p>Métricas avanzadas disponibles con stored procedures</p>
+                        </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Período Analizado:</span>
+                            <strong>{{ date_range_days }} días</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Desde:</span>
+                            <strong>{{ start_date|date:"d/m/Y" }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Hasta:</span>
+                            <strong>{{ end_date|date:"d/m/Y" }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Appointments -->
+    {% if filtered_appointments %}
+        <div class="row">
+            <div class="col-12">
+                <div class="table-analytics">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> Citas Recientes (Período Seleccionado)
+                        </h5>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Paciente</th>
+                                    <th>DNI</th>
+                                    <th>Prioridad</th>
+                                    <th>Motivo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in filtered_appointments %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ appointment.fecha|date:"d/m/Y H:i" }}</strong>
+                                        </td>
+                                        <td>{{ appointment.patient_name }} {{ appointment.patient_lastname }}</td>
+                                        <td>{{ appointment.patient_dni }}</td>
+                                        <td>
+                                            <span class="badge priority-{% if appointment.patient_priority == 'U' %}urgent{% elif appointment.patient_priority == 'A' %}high{% elif appointment.patient_priority == 'M' %}medium{% else %}low{% endif %}">
+                                                {% if appointment.patient_priority == 'U' %}Urgente
+                                                {% elif appointment.patient_priority == 'A' %}Alta
+                                                {% elif appointment.patient_priority == 'M' %}Media
+                                                {% else %}Baja{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ appointment.motivo|truncatewords:8 }}</td>
+                                        <td>
+                                            {% now "Y-m-d H:i" as current_datetime %}
+                                            {% if appointment.fecha|date:"Y-m-d H:i" > current_datetime %}
+                                                <span class="badge bg-success">Programada</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Realizada</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart data from Django
+    const chartData = {{ chart_data|safe }};
+    
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeCharts();
+    });
+    
+    function initializeCharts() {
+        // Appointments by Day Chart
+        if (chartData.appointments_by_day) {
+            const ctx1 = document.getElementById('appointmentsByDayChart').getContext('2d');
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: chartData.appointments_by_day.labels,
+                    datasets: [{
+                        label: 'Citas por Día',
+                        data: chartData.appointments_by_day.data,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Priority Distribution Chart
+        if (chartData.priority_distribution) {
+            const ctx2 = document.getElementById('priorityDistributionChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.priority_distribution.labels,
+                    datasets: [{
+                        data: chartData.priority_distribution.data,
+                        backgroundColor: chartData.priority_distribution.colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Appointments by Hour Chart
+        if (chartData.appointments_by_hour) {
+            const ctx3 = document.getElementById('appointmentsByHourChart').getContext('2d');
+            new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: chartData.appointments_by_hour.labels,
+                    datasets: [{
+                        label: 'Citas por Hora',
+                        data: chartData.appointments_by_hour.data,
+                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        borderColor: '#28a745',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+    
+    function setDateRange(days) {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - days);
+        
+        document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
+        document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+        
+        // Auto submit form
+        document.querySelector('form').submit();
+    }
+    
+    function exportReport() {
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        
+        const url = `{% url 'export_analytics_report' %}?start_date=${startDate}&end_date=${endDate}&format=json`;
+        
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `analytics_report_${startDate}_${endDate}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

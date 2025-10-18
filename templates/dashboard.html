@@ -1,203 +1,320 @@
-<!-- templates/dashboard.html -->
+{% extends 'base.html' %}
 
-<!DOCTYPE html>
-<html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Dashboard del Doctor - {{ request.user.get_full_name|default:request.user.username }}</title>
-        <style>
-            /* --- Reset Básico y Estilos Globales --- */
-            *, *::before, *::after {
-                box-sizing: border-box;
-                margin: 0;
-                padding: 0;
-            }
+{% block title %}Dashboard - Dr(a). {{ request.user.get_full_name|default:request.user.username }}{% endblock %}
 
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-                line-height: 1.6;
-                background-color: #f4f7f6; /* Un gris muy claro para el fondo */
-                color: #333;
-                padding: 20px;
-            }
-
-            .container {
-                max-width: 900px;
-                margin: 0 auto;
-                background-color: #fff;
-                padding: 25px;
-                border-radius: 8px;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            }
-
-            /* --- Encabezados --- */
-            h1, h2, h3 {
-                color: #2c3e50; /* Un azul oscuro/grisáceo */
-                margin-bottom: 0.75em;
-            }
-            h1 { font-size: 2em; margin-bottom: 1em; text-align: center; }
-            h2 { font-size: 1.6em; border-bottom: 2px solid #e0e0e0; padding-bottom: 0.3em; margin-top: 1.5em;}
-            h3 { font-size: 1.3em; color: #3498db; /* Un azul más brillante para la prioridad */ margin-top: 1.2em;}
-
-            /* --- Controles de Filtrado --- */
-            .filter-controls {
-                background-color: #eaf2f8; /* Azul claro */
-                padding: 15px;
-                border-radius: 6px;
-                margin-bottom: 25px;
-                text-align: center;
-            }
-            .filter-controls p {
-                margin-bottom: 10px;
-                font-weight: 500;
-                color: #2980b9;
-            }
-            .filter-controls a, .button-style {
-                text-decoration: none;
-                padding: 10px 18px;
-                background-color: #3498db; /* Azul principal */
-                color: white;
-                border-radius: 5px;
-                margin: 0 5px;
-                display: inline-block;
-                transition: background-color 0.3s ease;
-                border: none; /* Para que <button> se vea igual */
-                cursor: pointer; /* Para <button> */
-                font-size: 0.95em;
-            }
-            .filter-controls a:hover, .button-style:hover {
-                background-color: #2980b9; /* Azul más oscuro al pasar el ratón */
-            }
-            .filter-controls a.secondary, .button-style.secondary {
-                background-color: #95a5a6; /* Gris para el botón "Mostrar desde Hoy" */
-            }
-            .filter-controls a.secondary:hover, .button-style.secondary:hover {
-                background-color: #7f8c8d;
-            }
-
-
-            /* --- Lista de Citas --- */
-            .appointments-section {
-                margin-top: 20px;
-            }
-            .appointment-priority-group {
-                margin-bottom: 30px;
-            }
-            .appointment-list {
-                list-style-type: none;
-            }
-            .appointment-item {
-                background-color: #fdfdfd;
-                border: 1px solid #e0e0e0;
-                margin-bottom: 12px;
-                padding: 15px;
-                border-radius: 6px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-                transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            }
-            .appointment-item:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            }
-            .appointment-item strong {
-                color: #2c3e50;
-            }
-            .appointment-item .detail-label {
-                font-weight: 500;
-                color: #555;
-            }
-            .appointment-item .detail-value {
-                color: #333;
-            }
-
-            /* --- Mensajes y Enlaces --- */
-            .no-citas {
-                color: #7f8c8d; /* Gris */
-                padding: 15px;
-                background-color: #f9f9f9;
-                border: 1px dashed #ddd;
-                border-radius: 5px;
-                text-align: center;
-                margin-top: 20px;
-            }
-
-            .action-links {
-                margin-bottom: 25px;
-                text-align: right; /* Alinea el botón de crear cita a la derecha */
-            }
-
-            .create-cita-link { /* Hereda de .button-style */
-                background-color: #2ecc71; /* Verde */
-            }
-            .create-cita-link:hover {
-                background-color: #27ae60; /* Verde oscuro */
-            }
-
-            /* --- Formulario de Cerrar Sesión --- */
-            .logout-form {
-                margin-top: 40px;
-                text-align: center; /* Centrar el botón de logout */
-            }
-            .logout-form button { /* Hereda de .button-style */
-                background-color: #e74c3c; /* Rojo */
-            }
-            .logout-form button:hover {
-                background-color: #c0392b; /* Rojo oscuro */
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1>Bienvenido, Dr(a). {{ request.user.first_name }} {{ request.user.last_name }}</h1>
-
-            <!-- Controles de Filtrado y Descripción -->
-            <div class="filter-controls">
-                <p><strong>Mostrando:</strong> {{ current_filter_description }}</p>
-                {% if is_showing_previous_month %}
-                    <a href="{% url 'doctor_dashboard' %}" class="button-style secondary">Mostrar desde Hoy</a>
-                {% else %}
-                    <a href="{% url 'doctor_dashboard' %}?rango=mes_anterior" class="button-style">Incluir Mes Anterior</a>
-                {% endif %}
+{% block content %}
+<div class="row">
+    <!-- Welcome Section -->
+    <div class="col-12 mb-4">
+        <div class="card card-custom stats-card">
+            <div class="card-body text-center">
+                <h1 class="card-title mb-3">
+                    <i class="bi bi-person-badge"></i> 
+                    Bienvenido, Dr(a). {{ request.user.first_name }} {{ request.user.last_name }}
+                </h1>
+                <p class="card-text fs-5">Panel de Control - Sistema de Gestión de Citas Médicas</p>
             </div>
+        </div>
+    </div>
 
-            <header class="page-header">
-                <h2>Tus Citas Médicas</h2>
-                <div class="action-links">
-                    <a href="{% url 'crear_cita' %}" class="button-style create-cita-link">Crear Nueva Cita</a>
+    <!-- Statistics Cards -->
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom text-center">
+            <div class="card-body">
+                <i class="bi bi-calendar-check display-4 text-primary mb-3"></i>
+                <h5 class="card-title">Total de Citas</h5>
+                <h2 class="text-primary">{{ total_citas|default:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom text-center">
+            <div class="card-body">
+                <i class="bi bi-calendar-event display-4 text-success mb-3"></i>
+                <h5 class="card-title">Citas Hoy</h5>
+                <h2 class="text-success">{{ citas_hoy|default:0 }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card card-custom text-center">
+            <div class="card-body">
+                <i class="bi bi-people display-4 text-info mb-3"></i>
+                <h5 class="card-title">Pacientes Activos</h5>
+                <h2 class="text-info">{{ total_pacientes|default:0 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Controls -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <h5 class="card-title mb-2">
+                            <i class="bi bi-funnel"></i> Filtros de Visualización
+                        </h5>
+                        <p class="text-muted mb-0">
+                            <strong>Mostrando:</strong> {{ current_filter_description }}
+                        </p>
+                    </div>
+                    <div class="btn-group" role="group">
+                        {% if is_showing_previous_month %}
+                            <a href="{% url 'doctor_dashboard' %}" class="btn btn-outline-secondary btn-custom">
+                                <i class="bi bi-calendar-today"></i> Mostrar desde Hoy
+                            </a>
+                        {% else %}
+                            <a href="{% url 'doctor_dashboard' %}?rango=mes_anterior" class="btn btn-primary btn-custom">
+                                <i class="bi bi-calendar-range"></i> Incluir Mes Anterior
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'crear_cita' %}" class="btn btn-success btn-custom">
+                            <i class="bi bi-calendar-plus"></i> Nueva Cita
+                        </a>
+                    </div>
                 </div>
-            </header>
+            </div>
+        </div>
+    </div>
+</div>
 
-            <div class="appointments-section">
-                {% if hay_citas %} {# Asume que 'hay_citas' = citas_query.exists() se pasa desde la vista #}
+<!-- Appointments Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-calendar2-week"></i> Tus Citas Médicas
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if hay_citas %}
                     {% for prioridad, lista_citas in citas_por_prioridad.items %}
                         {% if lista_citas %}
-                            <section class="appointment-priority-group">
-                                <h3>Prioridad: {{ prioridad }} ({{ lista_citas|length }})</h3>
-                                <ul class="appointment-list">
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    {% if prioridad == 'Alta' %}
+                                        <i class="bi bi-exclamation-triangle text-danger"></i>
+                                        <span class="text-danger">Prioridad Alta</span>
+                                    {% elif prioridad == 'Media' %}
+                                        <i class="bi bi-exclamation-circle text-warning"></i>
+                                        <span class="text-warning">Prioridad Media</span>
+                                    {% else %}
+                                        <i class="bi bi-check-circle text-success"></i>
+                                        <span class="text-success">Prioridad Baja</span>
+                                    {% endif %}
+                                    <span class="badge bg-secondary ms-2">{{ lista_citas|length }}</span>
+                                </h5>
+                                
+                                <div class="row">
                                     {% for cita in lista_citas %}
-                                        <li class="appointment-item">
-                                            <p><strong>Paciente:</strong> {{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}</p>
-                                            <p><span class="detail-label">Fecha y Hora:</span> <span class="detail-value">{{ cita.fecha|date:"l, d \d\e F \d\e Y - H:i" }}</span></p>
-                                            <p><span class="detail-label">Motivo:</span> <span class="detail-value">{{ cita.motivo|truncatewords:15 }}</span></p>
-                                            <p><span class="detail-label">Observación:</span> <span class="detail-value">{{ cita.observaciones|truncatewords:15 }}</span></p>
-                                            {# <p><a href="{% url 'detalle_cita' cita.id %}">Ver detalles</a></p> #}
-                                        </li>
+                                        <div class="col-lg-6 mb-3">
+                                            <div class="card card-custom h-100 
+                                                {% if prioridad == 'Alta' %}priority-high
+                                                {% elif prioridad == 'Media' %}priority-medium
+                                                {% else %}priority-low{% endif %}">
+                                                <div class="card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h6 class="card-title text-primary mb-0">
+                                                            <i class="bi bi-person"></i> 
+                                                            {{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}
+                                                        </h6>
+                                                        {% if prioridad == 'Alta' %}
+                                                            <span class="badge bg-danger">Alta</span>
+                                                        {% elif prioridad == 'Media' %}
+                                                            <span class="badge bg-warning">Media</span>
+                                                        {% else %}
+                                                            <span class="badge bg-success">Baja</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-calendar-event"></i> 
+                                                            {{ cita.fecha|date:"l, d \d\e F \d\e Y" }}
+                                                        </small>
+                                                        <br>
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-clock"></i> 
+                                                            {{ cita.fecha|date:"H:i" }}
+                                                        </small>
+                                                    </div>
+                                                    
+                                                    <p class="card-text">
+                                                        <strong>Motivo:</strong> {{ cita.motivo|truncatewords:10 }}
+                                                    </p>
+                                                    
+                                                    {% if cita.observaciones %}
+                                                        <p class="card-text">
+                                                            <strong>Observaciones:</strong> {{ cita.observaciones|truncatewords:10 }}
+                                                        </p>
+                                                    {% endif %}
+                                                    
+                                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                                        <small class="text-muted">
+                                                            <i class="bi bi-info-circle"></i> 
+                                                            Cita #{{ cita.id }}
+                                                        </small>
+                                                        <div class="btn-group btn-group-sm">
+                                                            <button class="btn btn-outline-info btn-sm" 
+                                                                    data-bs-toggle="modal" 
+                                                                    data-bs-target="#citaModal{{ cita.id }}"
+                                                                    title="Ver detalles">
+                                                                <i class="bi bi-eye"></i>
+                                                            </button>
+                                                            <a href="{% url 'editar_cita' cita.id %}" 
+                                                               class="btn btn-outline-warning btn-sm" 
+                                                               data-bs-toggle="tooltip" 
+                                                               title="Editar cita">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </a>
+                                                            <a href="{% url 'eliminar_cita' cita.id %}" 
+                                                               class="btn btn-outline-danger btn-sm" 
+                                                               data-bs-toggle="tooltip" 
+                                                               title="Eliminar cita">
+                                                                <i class="bi bi-trash"></i>
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     {% endfor %}
-                                </ul>
-                            </section>
+                                </div>
+                            </div>
                         {% endif %}
                     {% endfor %}
                 {% else %}
-                    <p class="no-citas">No tienes citas programadas en el rango de fechas seleccionado.</p>
+                    <div class="text-center py-5">
+                        <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+                        <h4 class="text-muted">No hay citas programadas</h4>
+                        <p class="text-muted">No tienes citas programadas en el rango de fechas seleccionado.</p>
+                        <a href="{% url 'crear_cita' %}" class="btn btn-primary btn-custom">
+                            <i class="bi bi-calendar-plus"></i> Crear Primera Cita
+                        </a>
+                    </div>
                 {% endif %}
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Cerrar sesión mediante un formulario POST -->
-            <form action="{% url 'logout' %}" method="POST" class="logout-form">
-                {% csrf_token %}
-                <button type="submit" class="button-style">Cerrar sesión</button>
-            </form>
-        </div> <!-- Cierre de .container -->
-    </body>
-</html>
+<!-- Appointment Detail Modals -->
+{% if hay_citas %}
+    {% for prioridad, lista_citas in citas_por_prioridad.items %}
+        {% for cita in lista_citas %}
+            <div class="modal fade" id="citaModal{{ cita.id }}" tabindex="-1" aria-labelledby="citaModalLabel{{ cita.id }}" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title" id="citaModalLabel{{ cita.id }}">
+                                <i class="bi bi-calendar-event"></i> Detalles de la Cita #{{ cita.id }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="bi bi-person"></i> Información del Paciente</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>Nombre:</strong> {{ cita.paciente.nombre }} {{ cita.paciente.apellidos }}</p>
+                                            <p><strong>Prioridad:</strong> 
+                                                {% if prioridad == 'Alta' %}
+                                                    <span class="badge bg-danger">{{ prioridad }}</span>
+                                                {% elif prioridad == 'Media' %}
+                                                    <span class="badge bg-warning">{{ prioridad }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">{{ prioridad }}</span>
+                                                {% endif %}
+                                            </p>
+                                            {% if cita.paciente.telefono %}
+                                                <p><strong>Teléfono:</strong> {{ cita.paciente.telefono }}</p>
+                                            {% endif %}
+                                            {% if cita.paciente.email %}
+                                                <p><strong>Email:</strong> {{ cita.paciente.email }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="bi bi-calendar-event"></i> Información de la Cita</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <p><strong>Fecha:</strong> {{ cita.fecha|date:"l, d \d\e F \d\e Y" }}</p>
+                                            <p><strong>Hora:</strong> {{ cita.fecha|date:"H:i" }}</p>
+                                            <p><strong>Doctor:</strong> Dr(a). {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                                            <p><strong>Estado:</strong> 
+                                                {% if cita.fecha > today_date_for_template %}
+                                                    <span class="badge bg-success">Programada</span>
+                                                {% else %}
+                                                    <span class="badge bg-info">Realizada</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="bi bi-chat-dots"></i> Detalles Médicos</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <strong>Motivo de la consulta:</strong>
+                                                <p class="mt-1">{{ cita.motivo }}</p>
+                                            </div>
+                                            
+                                            {% if cita.observaciones %}
+                                                <div class="mb-0">
+                                                    <strong>Observaciones:</strong>
+                                                    <p class="mt-1">{{ cita.observaciones }}</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="bi bi-x-circle"></i> Cerrar
+                            </button>
+                            <a href="{% url 'editar_cita' cita.id %}" class="btn btn-warning">
+                                <i class="bi bi-pencil"></i> Editar Cita
+                            </a>
+                            <a href="{% url 'eliminar_cita' cita.id %}" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> Eliminar Cita
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

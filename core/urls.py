@@ -23,12 +23,25 @@ from appointments.views import crear_cita
 from doctors.views import dashboard  # Importa LoginView
 
 
+from core.views_analytics import analytics_dashboard, appointment_analytics_ajax, export_analytics_report
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', auth_views.LoginView.as_view(template_name='login.html'), name='login'),  # Pantalla principal
     path('doctors/dashboard/', dashboard, name='doctor_dashboard'),  # Ruta para el dashboard del doctor
     path('logout/', LogoutView.as_view(), name='logout'),  # Añadir la ruta de cierre de sesión
-    path('apointments/crear/', crear_cita, name='crear_cita'),
+    
+    # Appointments URLs
+    path('appointments/', include('appointments.urls')),
+    
+    # Patients URLs
+    path('patients/', include('patients.urls_dashboard')),
+    
+    # Analytics URLs
+    path('analytics/', analytics_dashboard, name='analytics_dashboard'),
+    path('analytics/ajax/', appointment_analytics_ajax, name='appointment_analytics_ajax'),
+    path('analytics/export/', export_analytics_report, name='export_analytics_report'),
+    
     #apis
     path('api/v1/appointments/', include('appointments.urls')),
     path('api/v1/doctors/', include('doctors.urls')),

@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Pacientes - MediCitas Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .patient-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #e9ecef;
+    }
+    
+    .patient-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .patient-card.priority-urgent { border-left-color: #dc3545; }
+    .patient-card.priority-high { border-left-color: #fd7e14; }
+    .patient-card.priority-medium { border-left-color: #ffc107; }
+    .patient-card.priority-low { border-left-color: #28a745; }
+    
+    .priority-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .search-box {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .search-box:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="bi bi-people"></i> Gestión de Pacientes
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Dr(a). {{ doctor.nombre }} {{ doctor.apellidos }} - {{ doctor.especialidad }}
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'create_patient' %}" class="btn btn-success btn-lg">
+                        <i class="bi bi-person-plus"></i> Nuevo Paciente
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-people display-4 mb-2"></i>
+                    <h3 class="mb-0">{{ total_patients }}</h3>
+                    <p class="mb-0">Total Pacientes</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-calendar-check display-4 mb-2"></i>
+                    <h3 class="mb-0">{{ patient_stats|length }}</h3>
+                    <p class="mb-0">Con Citas Activas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle display-4 mb-2"></i>
+                    <h3 class="mb-0">
+                        {% for patient in patient_stats %}
+                            {% if patient.prioridad == 'U' %}{{ forloop.counter0|add:1 }}{% endif %}
+                        {% empty %}0{% endfor %}
+                    </h3>
+                    <p class="mb-0">Prioridad Urgente</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="bi bi-graph-up display-4 mb-2"></i>
+                    <h3 class="mb-0">
+                        {% if patient_stats %}
+                            {% for patient in patient_stats %}{{ patient.total_appointments|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}
+                        {% else %}0{% endif %}
+                    </h3>
+                    <p class="mb-0">Citas Totales</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <div class="form-floating">
+                    <input type="text" class="form-control search-box" id="search" name="search" 
+                           value="{{ search_query }}" placeholder="Buscar pacientes...">
+                    <label for="search">
+                        <i class="bi bi-search"></i> Buscar por nombre, DNI o contacto
+                    </label>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="form-floating">
+                    <select class="form-select" id="priority" name="priority">
+                        <option value="">Todas las prioridades</option>
+                        {% for value, label in priority_choices %}
+                            <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <label for="priority">Prioridad</label>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="form-floating">
+                    <input type="number" class="form-control" id="age_min" name="age_min" 
+                           value="{{ age_min }}" min="0" max="120" placeholder="Edad mínima">
+                    <label for="age_min">Edad Mínima</label>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="form-floating">
+                    <input type="number" class="form-control" id="age_max" name="age_max" 
+                           value="{{ age_max }}" min="0" max="120" placeholder="Edad máxima">
+                    <label for="age_max">Edad Máxima</label>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary h-100 w-100">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+            </div>
+        </form>
+        
+        {% if search_query or priority_filter or age_min or age_max %}
+            <div class="mt-3">
+                <a href="{% url 'patient_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Limpiar Filtros
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Patients Grid -->
+    <div class="row">
+        {% if patients_data %}
+            {% for patient in patients_data %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card patient-card priority-{% if patient.prioridad == 'U' %}urgent{% elif patient.prioridad == 'A' %}high{% elif patient.prioridad == 'M' %}medium{% else %}low{% endif %}">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="bi bi-person-circle"></i>
+                                {{ patient.nombre }} {{ patient.apellidos }}
+                            </h6>
+                            <span class="badge priority-badge 
+                                {% if patient.prioridad == 'U' %}bg-danger
+                                {% elif patient.prioridad == 'A' %}bg-warning
+                                {% elif patient.prioridad == 'M' %}bg-info
+                                {% else %}bg-success{% endif %}">
+                                {{ patient.priority_display|default:"Sin definir" }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted d-block">DNI</small>
+                                    <strong>{{ patient.dni }}</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Edad</small>
+                                    <strong>{{ patient.age|default:"N/A" }} años</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Citas</small>
+                                    <strong>{{ patient.total_appointments|default:0 }}</strong>
+                                </div>
+                            </div>
+                            
+                            {% if patient.last_appointment %}
+                                <p class="text-muted small mb-2">
+                                    <i class="bi bi-calendar-event"></i>
+                                    Última cita: {{ patient.last_appointment|date:"d/m/Y" }}
+                                </p>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'patient_detail' patient.id %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i> Ver Detalles
+                                </a>
+                                <a href="{% url 'edit_patient' patient.id %}" 
+                                   class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </a>
+                                <a href="{% url 'crear_cita' %}?patient={{ patient.id }}" 
+                                   class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-calendar-plus"></i> Nueva Cita
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="bi bi-people display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">No se encontraron pacientes</h4>
+                    <p class="text-muted">
+                        {% if search_query or priority_filter or age_min or age_max %}
+                            No hay pacientes que coincidan con los filtros aplicados.
+                        {% else %}
+                            Aún no tienes pacientes registrados.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'create_patient' %}" class="btn btn-success">
+                        <i class="bi bi-person-plus"></i> Crear Primer Paciente
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if has_previous or has_next %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Paginación de pacientes">
+                    <ul class="pagination justify-content-center">
+                        {% if has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ current_page|add:-1 }}{% if search_query %}&search={{ search_query }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if age_min %}&age_min={{ age_min }}{% endif %}{% if age_max %}&age_max={{ age_max }}{% endif %}">
+                                    <i class="bi bi-chevron-left"></i> Anterior
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">Página {{ current_page }}</span>
+                        </li>
+                        
+                        {% if has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ current_page|add:1 }}{% if search_query %}&search={{ search_query }}{% endif %}{% if priority_filter %}&priority={{ priority_filter }}{% endif %}{% if age_min %}&age_min={{ age_min }}{% endif %}{% if age_max %}&age_max={{ age_max }}{% endif %}">
+                                    Siguiente <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Top Patients Section -->
+    {% if patient_stats %}
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-trophy"></i> Pacientes con Más Citas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Paciente</th>
+                                        <th>DNI</th>
+                                        <th>Edad</th>
+                                        <th>Prioridad</th>
+                                        <th>Total Citas</th>
+                                        <th>Última Cita</th>
+                                        <th>Próximas Citas</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for patient in patient_stats %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ patient.nombre }} {{ patient.apellidos }}</strong>
+                                            </td>
+                                            <td>{{ patient.dni }}</td>
+                                            <td>{{ patient.age|default:"N/A" }} años</td>
+                                            <td>
+                                                <span class="badge 
+                                                    {% if patient.prioridad == 'U' %}bg-danger
+                                                    {% elif patient.prioridad == 'A' %}bg-warning
+                                                    {% elif patient.prioridad == 'M' %}bg-info
+                                                    {% else %}bg-success{% endif %}">
+                                                    {% if patient.prioridad == 'U' %}Urgente
+                                                    {% elif patient.prioridad == 'A' %}Alta
+                                                    {% elif patient.prioridad == 'M' %}Media
+                                                    {% else %}Baja{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-primary">{{ patient.total_appointments }}</span>
+                                            </td>
+                                            <td>
+                                                {% if patient.last_appointment %}
+                                                    {{ patient.last_appointment|date:"d/m/Y H:i" }}
+                                                {% else %}
+                                                    <span class="text-muted">Sin citas</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-success">{{ patient.upcoming_appointments|default:0 }}</span>
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'patient_detail' patient.id %}" 
+                                                       class="btn btn-outline-primary" title="Ver detalles">
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'edit_patient' patient.id %}" 
+                                                       class="btn btn-outline-warning" title="Editar">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-submit form on filter changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const selects = form.querySelectorAll('select');
+        
+        selects.forEach(select => {
+            select.addEventListener('change', function() {
+                form.submit();
+            });
+        });
+        
+        // Search with delay
+        const searchInput = document.getElementById('search');
+        let searchTimeout;
+        
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                if (this.value.length >= 3 || this.value.length === 0) {
+                    form.submit();
+                }
+            }, 500);
+        });
+    });
+</script>
+{% endblock %}
