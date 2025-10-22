@@ -1,0 +1,582 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load calendar_extras %}
+
+{% block title %}Calendario de Citas - MediCitas Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .calendario-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .calendario-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .calendario-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-radius: 20px 20px 0 0;
+        padding: 20px;
+    }
+    
+    .calendario-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .btn-nav {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 10px 15px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-nav:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+    }
+    
+    .calendario-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .dia-header {
+        background: #495057;
+        color: white;
+        padding: 15px 5px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .dia-celda {
+        background: white;
+        min-height: 120px;
+        padding: 8px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .dia-celda:hover {
+        background: #f8f9fa;
+        transform: scale(1.02);
+    }
+    
+    .dia-numero {
+        font-weight: bold;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+    
+    .dia-hoy {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        color: white;
+    }
+    
+    .dia-hoy .dia-numero {
+        color: white;
+    }
+    
+    .dia-otro-mes {
+        background: #f8f9fa;
+        color: #adb5bd;
+    }
+    
+    .cita-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 3px 6px;
+        margin: 2px 0;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        cursor: move;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .cita-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .cita-item.estado-confirmada {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    }
+    
+    .cita-item.estado-completada {
+        background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+    }
+    
+    .cita-item.estado-cancelada {
+        background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    }
+    
+    .filtros-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .drop-zone {
+        border: 2px dashed #007bff;
+        background: rgba(0,123,255,0.1);
+        border-radius: 5px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #007bff;
+        font-size: 0.8rem;
+    }
+    
+    .modal-cita {
+        backdrop-filter: blur(5px);
+    }
+    
+    .leyenda {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+    
+    .leyenda-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+    }
+    
+    .leyenda-color {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendario-container">
+    <div class="container">
+        <!-- Filtros -->
+        <div class="filtros-container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar3"></i>
+                        Calendario de Citas - {{ mes_nombre }} {{ año }}
+                    </h5>
+                </div>
+                <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <select class="form-select" id="filtro-doctor" onchange="filtrarPorDoctor()">
+                                <option value="">Todos los doctores</option>
+                                {% for doctor in doctores %}
+                                    <option value="{{ doctor.id }}" 
+                                            {% if doctor.id|stringformat:"s" == doctor_seleccionado %}selected{% endif %}>
+                                        {{ doctor }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-primary w-100" onclick="irHoy()">
+                                <i class="bi bi-calendar-today"></i> Hoy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Leyenda -->
+            <div class="leyenda">
+                <div class="leyenda-item">
+                    <div class="leyenda-color" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <span>Programada</span>
+                </div>
+                <div class="leyenda-item">
+                    <div class="leyenda-color" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);"></div>
+                    <span>Confirmada</span>
+                </div>
+                <div class="leyenda-item">
+                    <div class="leyenda-color" style="background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);"></div>
+                    <span>Completada</span>
+                </div>
+                <div class="leyenda-item">
+                    <div class="leyenda-color" style="background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);"></div>
+                    <span>Cancelada</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendario -->
+        <div class="calendario-card">
+            <div class="calendario-header">
+                <div class="calendario-nav">
+                    <button class="btn-nav" onclick="cambiarMes(-1)">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </button>
+                    <h3 class="mb-0">{{ mes_nombre }} {{ año }}</h3>
+                    <button class="btn-nav" onclick="cambiarMes(1)">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-3">
+                <div class="calendario-grid">
+                    <!-- Headers de días -->
+                    <div class="dia-header">Dom</div>
+                    <div class="dia-header">Lun</div>
+                    <div class="dia-header">Mar</div>
+                    <div class="dia-header">Mié</div>
+                    <div class="dia-header">Jue</div>
+                    <div class="dia-header">Vie</div>
+                    <div class="dia-header">Sáb</div>
+                    
+                    <!-- Días del calendario -->
+                    {% for semana in calendario %}
+                        {% for dia in semana %}
+                            <div class="dia-celda {% if dia == hoy.day and mes == hoy.month and año == hoy.year %}dia-hoy{% endif %} 
+                                        {% if dia == 0 %}dia-otro-mes{% endif %}"
+                                 data-fecha="{{ año }}-{{ mes|stringformat:'02d' }}-{{ dia|stringformat:'02d' }}"
+                                 onclick="{% if dia != 0 %}mostrarCitasDia('{{ año }}-{{ mes|stringformat:'02d' }}-{{ dia|stringformat:'02d' }}'){% endif %}">
+                                
+                                {% if dia != 0 %}
+                                    <div class="dia-numero">{{ dia }}</div>
+                                    
+                                    <!-- Citas del día -->
+                                    {% if dia in citas_por_dia %}
+                                        {% for cita in citas_por_dia|lookup:dia %}
+                                            <div class="cita-item estado-{{ cita.estado }}" 
+                                                 draggable="true"
+                                                 data-cita-id="{{ cita.id }}"
+                                                 ondragstart="iniciarArrastre(event)"
+                                                 onclick="event.stopPropagation(); mostrarDetalleCita({{ cita.id }})">
+                                                <div>{{ cita.hora }}</div>
+                                                <div style="font-size: 0.7rem;">{{ cita.paciente|truncatechars:15 }}</div>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    
+                                    <!-- Zona de drop para reagendar -->
+                                    <div class="drop-zone d-none" 
+                                         ondrop="soltarCita(event)" 
+                                         ondragover="permitirDrop(event)">
+                                        Soltar aquí
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles de cita -->
+<div class="modal fade modal-cita" id="modalDetalleCita" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-check"></i>
+                    Detalles de la Cita
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="contenido-detalle-cita">
+                <!-- Contenido cargado dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para reagendar -->
+<div class="modal fade" id="modalReagendar" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Reagendar Cita
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="form-reagendar">
+                    <input type="hidden" id="cita-id-reagendar">
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Fecha</label>
+                        <input type="date" class="form-control" id="nueva-fecha" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nueva Hora</label>
+                        <select class="form-select" id="nueva-hora" required>
+                            <option value="">Seleccionar hora...</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" onclick="confirmarReagendamiento()">
+                    <i class="bi bi-check-lg"></i> Reagendar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let citaArrastrada = null;
+    
+    // Variables del calendario
+    const mesActual = {{ mes }};
+    const añoActual = {{ año }};
+    
+    function cambiarMes(direccion) {
+        let nuevoMes = mesActual + direccion;
+        let nuevoAño = añoActual;
+        
+        if (nuevoMes > 12) {
+            nuevoMes = 1;
+            nuevoAño++;
+        } else if (nuevoMes < 1) {
+            nuevoMes = 12;
+            nuevoAño--;
+        }
+        
+        const doctorId = document.getElementById('filtro-doctor').value;
+        let url = `?mes=${nuevoMes}&año=${nuevoAño}`;
+        if (doctorId) {
+            url += `&doctor_id=${doctorId}`;
+        }
+        
+        window.location.href = url;
+    }
+    
+    function irHoy() {
+        const hoy = new Date();
+        const doctorId = document.getElementById('filtro-doctor').value;
+        let url = `?mes=${hoy.getMonth() + 1}&año=${hoy.getFullYear()}`;
+        if (doctorId) {
+            url += `&doctor_id=${doctorId}`;
+        }
+        window.location.href = url;
+    }
+    
+    function filtrarPorDoctor() {
+        const doctorId = document.getElementById('filtro-doctor').value;
+        let url = `?mes=${mesActual}&año=${añoActual}`;
+        if (doctorId) {
+            url += `&doctor_id=${doctorId}`;
+        }
+        window.location.href = url;
+    }
+    
+    function mostrarCitasDia(fecha) {
+        fetch(`/appointments/api/citas-dia/?fecha=${fecha}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.citas && data.citas.length > 0) {
+                    let contenido = '<div class="list-group">';
+                    data.citas.forEach(cita => {
+                        contenido += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${cita.paciente}</h6>
+                                        <p class="mb-1"><strong>Doctor:</strong> ${cita.doctor}</p>
+                                        <p class="mb-1"><strong>Hora:</strong> ${cita.hora}</p>
+                                        <p class="mb-1"><strong>Motivo:</strong> ${cita.motivo}</p>
+                                        ${cita.observaciones ? `<p class="mb-1"><strong>Observaciones:</strong> ${cita.observaciones}</p>` : ''}
+                                    </div>
+                                    <span class="badge bg-primary">${cita.estado}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    contenido += '</div>';
+                    document.getElementById('contenido-detalle-cita').innerHTML = contenido;
+                } else {
+                    document.getElementById('contenido-detalle-cita').innerHTML = 
+                        '<p class="text-center text-muted">No hay citas programadas para este día.</p>';
+                }
+                
+                new bootstrap.Modal(document.getElementById('modalDetalleCita')).show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarAlerta('Error al cargar las citas del día', 'danger');
+            });
+    }
+    
+    // Funciones de drag & drop
+    function iniciarArrastre(event) {
+        citaArrastrada = {
+            id: event.target.dataset.citaId,
+            elemento: event.target
+        };
+        
+        // Mostrar zonas de drop
+        document.querySelectorAll('.drop-zone').forEach(zona => {
+            zona.classList.remove('d-none');
+        });
+        
+        event.dataTransfer.effectAllowed = 'move';
+    }
+    
+    function permitirDrop(event) {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }
+    
+    function soltarCita(event) {
+        event.preventDefault();
+        
+        if (!citaArrastrada) return;
+        
+        const celda = event.target.closest('.dia-celda');
+        const fecha = celda.dataset.fecha;
+        
+        // Mostrar modal para seleccionar hora
+        document.getElementById('cita-id-reagendar').value = citaArrastrada.id;
+        document.getElementById('nueva-fecha').value = fecha;
+        
+        // Cargar horarios disponibles
+        cargarHorariosDisponibles(fecha);
+        
+        new bootstrap.Modal(document.getElementById('modalReagendar')).show();
+        
+        // Ocultar zonas de drop
+        document.querySelectorAll('.drop-zone').forEach(zona => {
+            zona.classList.add('d-none');
+        });
+        
+        citaArrastrada = null;
+    }
+    
+    function cargarHorariosDisponibles(fecha) {
+        const doctorId = document.getElementById('filtro-doctor').value || '';
+        
+        fetch(`/appointments/api/horarios-disponibles/?fecha=${fecha}&doctor_id=${doctorId}`)
+            .then(response => response.json())
+            .then(data => {
+                const selectHora = document.getElementById('nueva-hora');
+                selectHora.innerHTML = '<option value="">Seleccionar hora...</option>';
+                
+                data.horarios.forEach(hora => {
+                    selectHora.innerHTML += `<option value="${hora}">${hora}</option>`;
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarAlerta('Error al cargar horarios disponibles', 'danger');
+            });
+    }
+    
+    function confirmarReagendamiento() {
+        const citaId = document.getElementById('cita-id-reagendar').value;
+        const nuevaFecha = document.getElementById('nueva-fecha').value;
+        const nuevaHora = document.getElementById('nueva-hora').value;
+        
+        if (!nuevaFecha || !nuevaHora) {
+            mostrarAlerta('Por favor seleccione fecha y hora', 'warning');
+            return;
+        }
+        
+        fetch('/appointments/api/reagendar/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                cita_id: citaId,
+                nueva_fecha: nuevaFecha,
+                nueva_hora: nuevaHora
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarAlerta('Cita reagendada exitosamente', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('modalReagendar')).hide();
+                // Recargar página para mostrar cambios
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                mostrarAlerta(data.error || 'Error al reagendar la cita', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarAlerta('Error al reagendar la cita', 'danger');
+        });
+    }
+    
+    function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.createElement('div');
+        alerta.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+        alerta.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alerta.innerHTML = `
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alerta);
+        
+        setTimeout(() => {
+            if (alerta.parentNode) {
+                alerta.parentNode.removeChild(alerta);
+            }
+        }, 5000);
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Agregar filtro personalizado para template
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar tooltips si es necesario
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

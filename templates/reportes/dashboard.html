@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Reportes - MediCitas Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reportes-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .stats-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        margin-bottom: 15px;
+    }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .stats-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .reportes-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        overflow: hidden;
+    }
+    
+    .reportes-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 25px;
+    }
+    
+    .btn-reporte {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        margin: 5px;
+    }
+    
+    .btn-reporte:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        color: white;
+    }
+    
+    .btn-excel {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    }
+    
+    .btn-pdf {
+        background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    }
+    
+    .filtros-form {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .grafico-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .reportes-recientes {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .reporte-item {
+        border-left: 4px solid #007bff;
+        padding: 15px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        border-radius: 0 10px 10px 0;
+        transition: all 0.3s ease;
+    }
+    
+    .reporte-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reportes-container">
+    <div class="container">
+        <!-- Estadísticas Rápidas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon mx-auto" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+                        <i class="bi bi-calendar-day"></i>
+                    </div>
+                    <h3 class="stats-number">{{ estadisticas.citas_hoy }}</h3>
+                    <p class="stats-label">Citas Hoy</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon mx-auto" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                        <i class="bi bi-calendar-month"></i>
+                    </div>
+                    <h3 class="stats-number">{{ estadisticas.citas_mes }}</h3>
+                    <p class="stats-label">Citas Este Mes</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon mx-auto" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <h3 class="stats-number">{{ estadisticas.pacientes_activos }}</h3>
+                    <p class="stats-label">Pacientes Activos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <div class="stats-icon mx-auto" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <h3 class="stats-number">{{ estadisticas.doctores_activos }}</h3>
+                    <p class="stats-label">Doctores Activos</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Panel de Generación de Reportes -->
+            <div class="col-lg-8">
+                <div class="reportes-card">
+                    <div class="reportes-header">
+                        <h4 class="mb-0">
+                            <i class="bi bi-file-earmark-bar-graph"></i>
+                            Generar Reportes Avanzados
+                        </h4>
+                        <p class="mb-0 mt-2">Exporta datos detallados en PDF o Excel con gráficos estadísticos</p>
+                    </div>
+                    
+                    <div class="p-4">
+                        <!-- Filtros -->
+                        <form id="form-filtros" class="filtros-form">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label class="form-label">Tipo de Reporte</label>
+                                    <select class="form-select" id="tipo-reporte" required>
+                                        <option value="citas_diarias">Citas Diarias</option>
+                                        <option value="citas_mensuales">Citas Mensuales</option>
+                                        <option value="estadisticas_doctor">Estadísticas por Doctor</option>
+                                        <option value="ocupacion_clinica">Ocupación de Clínica</option>
+                                        <option value="ingresos">Reporte de Ingresos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Fecha Inicio</label>
+                                    <input type="date" class="form-control" id="fecha-inicio" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Fecha Fin</label>
+                                    <input type="date" class="form-control" id="fecha-fin" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Doctor (Opcional)</label>
+                                    <select class="form-select" id="doctor-filtro">
+                                        <option value="">Todos</option>
+                                        <!-- Se llenarán dinámicamente -->
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                        
+                        <!-- Botones de Exportación -->
+                        <div class="text-center mt-4">
+                            <button class="btn btn-reporte btn-pdf" onclick="generarReporte('pdf')">
+                                <i class="bi bi-file-pdf"></i> Exportar PDF
+                            </button>
+                            <button class="btn btn-reporte btn-excel" onclick="generarReporte('excel')">
+                                <i class="bi bi-file-excel"></i> Exportar Excel
+                            </button>
+                        </div>
+                        
+                        <!-- Loading Spinner -->
+                        <div class="loading-spinner" id="loading-spinner">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Generando reporte...</span>
+                            </div>
+                            <p class="mt-2">Generando reporte, por favor espere...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gráficos Estadísticos -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="grafico-container">
+                            <h5 class="mb-3">
+                                <i class="bi bi-bar-chart"></i>
+                                Citas por Mes
+                            </h5>
+                            <div id="grafico-citas-mes">
+                                <canvas id="chart-citas-mes" width="400" height="200"></canvas>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="cargarGrafico('citas_por_mes')">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="grafico-container">
+                            <h5 class="mb-3">
+                                <i class="bi bi-pie-chart"></i>
+                                Estados de Citas
+                            </h5>
+                            <div id="grafico-estados">
+                                <canvas id="chart-estados" width="400" height="200"></canvas>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary mt-2" onclick="cargarGrafico('estados_citas')">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Panel de Reportes Recientes -->
+            <div class="col-lg-4">
+                <div class="reportes-card">
+                    <div class="reportes-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i>
+                            Reportes Recientes
+                        </h5>
+                    </div>
+                    
+                    <div class="p-3">
+                        <div class="reportes-recientes">
+                            {% if reportes_recientes %}
+                                {% for reporte in reportes_recientes %}
+                                    <div class="reporte-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">{{ reporte.nombre }}</h6>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-calendar"></i>
+                                                    {{ reporte.fecha_generacion|date:"d/m/Y H:i" }}
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="bi bi-file-earmark"></i>
+                                                    {{ reporte.get_formato_display }}
+                                                </small>
+                                            </div>
+                                            <span class="badge bg-primary">{{ reporte.get_tipo_display }}</span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                                    <p class="mt-2">No hay reportes generados aún</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+                                <i class="bi bi-arrow-clockwise"></i> Actualizar Lista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Panel de Acciones Rápidas -->
+                <div class="reportes-card mt-4">
+                    <div class="reportes-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-lightning"></i>
+                            Acciones Rápidas
+                        </h5>
+                    </div>
+                    
+                    <div class="p-3">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="reporteRapido('hoy')">
+                                <i class="bi bi-calendar-day"></i>
+                                Reporte de Hoy
+                            </button>
+                            <button class="btn btn-outline-success" onclick="reporteRapido('semana')">
+                                <i class="bi bi-calendar-week"></i>
+                                Reporte Semanal
+                            </button>
+                            <button class="btn btn-outline-info" onclick="reporteRapido('mes')">
+                                <i class="bi bi-calendar-month"></i>
+                                Reporte Mensual
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Variables globales
+    let chartCitasMes = null;
+    let chartEstados = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Establecer fechas por defecto
+        const hoy = new Date();
+        const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        
+        document.getElementById('fecha-inicio').value = primerDiaMes.toISOString().split('T')[0];
+        document.getElementById('fecha-fin').value = hoy.toISOString().split('T')[0];
+        
+        // Cargar gráficos iniciales
+        cargarGrafico('citas_por_mes');
+        cargarGrafico('estados_citas');
+    });
+    
+    function generarReporte(formato) {
+        const tipoReporte = document.getElementById('tipo-reporte').value;
+        const fechaInicio = document.getElementById('fecha-inicio').value;
+        const fechaFin = document.getElementById('fecha-fin').value;
+        const doctorId = document.getElementById('doctor-filtro').value;
+        
+        if (!fechaInicio || !fechaFin) {
+            mostrarAlerta('Por favor seleccione las fechas', 'warning');
+            return;
+        }
+        
+        // Mostrar spinner
+        document.getElementById('loading-spinner').style.display = 'block';
+        
+        // Construir URL
+        let url = `/reportes/generar-${formato}/?tipo=${tipoReporte}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}`;
+        if (doctorId) {
+            url += `&doctor_id=${doctorId}`;
+        }
+        
+        // Crear enlace de descarga
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `reporte_${tipoReporte}_${fechaInicio}.${formato === 'pdf' ? 'pdf' : 'xlsx'}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Ocultar spinner después de un tiempo
+        setTimeout(() => {
+            document.getElementById('loading-spinner').style.display = 'none';
+            mostrarAlerta(`Reporte ${formato.toUpperCase()} generado exitosamente`, 'success');
+        }, 2000);
+    }
+    
+    function cargarGrafico(tipo) {
+        fetch(`/reportes/grafico/?tipo=${tipo}`)
+            .then(response => response.json())
+            .then(data => {
+                if (tipo === 'citas_por_mes') {
+                    mostrarGraficoCitasMes(data.grafico);
+                } else if (tipo === 'estados_citas') {
+                    mostrarGraficoEstados(data.grafico);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarAlerta('Error al cargar el gráfico', 'danger');
+            });
+    }
+    
+    function mostrarGraficoCitasMes(imagenBase64) {
+        const container = document.getElementById('grafico-citas-mes');
+        container.innerHTML = `<img src="${imagenBase64}" class="img-fluid" alt="Gráfico de Citas por Mes">`;
+    }
+    
+    function mostrarGraficoEstados(imagenBase64) {
+        const container = document.getElementById('grafico-estados');
+        container.innerHTML = `<img src="${imagenBase64}" class="img-fluid" alt="Gráfico de Estados de Citas">`;
+    }
+    
+    function reporteRapido(periodo) {
+        const hoy = new Date();
+        let fechaInicio, fechaFin;
+        
+        switch(periodo) {
+            case 'hoy':
+                fechaInicio = fechaFin = hoy.toISOString().split('T')[0];
+                break;
+            case 'semana':
+                const inicioSemana = new Date(hoy.setDate(hoy.getDate() - hoy.getDay()));
+                fechaInicio = inicioSemana.toISOString().split('T')[0];
+                fechaFin = new Date().toISOString().split('T')[0];
+                break;
+            case 'mes':
+                fechaInicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
+                fechaFin = new Date().toISOString().split('T')[0];
+                break;
+        }
+        
+        // Establecer valores en el formulario
+        document.getElementById('fecha-inicio').value = fechaInicio;
+        document.getElementById('fecha-fin').value = fechaFin;
+        document.getElementById('tipo-reporte').value = 'citas_diarias';
+        
+        // Generar reporte PDF automáticamente
+        generarReporte('pdf');
+    }
+    
+    function mostrarAlerta(mensaje, tipo) {
+        const alerta = document.createElement('div');
+        alerta.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+        alerta.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alerta.innerHTML = `
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alerta);
+        
+        setTimeout(() => {
+            if (alerta.parentNode) {
+                alerta.parentNode.removeChild(alerta);
+            }
+        }, 5000);
+    }
+</script>
+{% endblock %}

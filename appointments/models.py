@@ -18,6 +18,31 @@ class Appointment(models.Model):
     motivo = models.TextField(verbose_name="Motivo de la consulta")
     observaciones = models.TextField(blank=True, null=True, verbose_name="Observaciones del doctor")
     creada_en = models.DateTimeField(auto_now_add=True)
+    
+    # Referencia a la clínica (para sistema multi-tenant)
+    clinica = models.ForeignKey(
+        'clinicas.Clinica', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        verbose_name="Clínica"
+    )
+    
+    # Estados de la cita
+    ESTADOS = [
+        ('programada', 'Programada'),
+        ('confirmada', 'Confirmada'),
+        ('en_curso', 'En Curso'),
+        ('completada', 'Completada'),
+        ('cancelada', 'Cancelada'),
+        ('no_asistio', 'No Asistió'),
+    ]
+    estado = models.CharField(
+        max_length=20, 
+        choices=ESTADOS, 
+        default='programada',
+        verbose_name="Estado de la Cita"
+    )
 
     class Meta:
         verbose_name = "Cita Médica"

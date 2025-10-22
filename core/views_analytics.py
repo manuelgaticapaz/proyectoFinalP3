@@ -8,7 +8,7 @@ from django.db.models import Count, Q, Avg
 from doctors.models import Doctor
 from patients.models import Patient
 from appointments.models import Appointment
-from core.database_utils import MySQLStoredProcedures
+# from core.database_utils import MySQLStoredProcedures  # Comentado temporalmente
 import json
 
 
@@ -35,46 +35,61 @@ def analytics_dashboard(request):
         start_date = start_date_obj.strftime('%Y-%m-%d')
         end_date = end_date_obj.strftime('%Y-%m-%d')
     
-    try:
-        # Usar stored procedures para obtener analytics
-        doctor_stats = MySQLStoredProcedures.call_doctor_statistics(doctor.id)
-        patient_stats = MySQLStoredProcedures.call_patient_statistics(doctor.id)
-        appointment_analytics = MySQLStoredProcedures.call_appointment_analytics(start_date_obj, end_date_obj)
-        
-        # Filtrar citas por fecha usando SP
-        filtered_appointments = MySQLStoredProcedures.call_filter_appointments_by_date(
-            doctor.id, start_date_obj, end_date_obj, None
-        )
-        
-        using_stored_procedures = True
-        
-    except Exception as e:
-        # Fallback a consultas Django
-        messages.warning(request, 'Usando consultas básicas. Para mejores analytics ejecute: python manage.py create_stored_procedures')
-        
-        # Estadísticas básicas del doctor
-        total_appointments = Appointment.objects.filter(doctor=doctor).count()
-        today_appointments = Appointment.objects.filter(
+    # Usar consultas Django directamente (más confiable)
+    # Estadísticas básicas del doctor
+    total_appointments = Appointment.objects.filter(doctor=doctor).count()
+    today_appointments = Appointment.objects.filter(
+        doctor=doctor, 
+        fecha__date=timezone.now().date()
+    ).count()
+    
+    week_start = timezone.now().date() - timedelta(days=7)
+    month_start = timezone.now().date() - timedelta(days=30)
+    
+    week_appointments = Appointment.objects.filter(
+        doctor=doctor,
+        fecha__date__gte=week_start
+    ).count()
+    
+    month_appointments = Appointment.objects.filter(
+        doctor=doctor,
+        fecha__date__gte=month_start
+    ).count()
+    
+    doctor_stats = {
+        'total_appointments': total_appointments,
+        'today_appointments': today_appointments,
+        'week_appointments': week_appointments,
+        'month_appointments': month_appointments,
+        'total_patients': Patient.objects.filter(appointment__doctor=doctor).distinct().count(),
+        'upcoming_appointments': Appointment.objects.filter(
             doctor=doctor, 
-            fecha__date=timezone.now().date()
-        ).count()
-        
-        doctor_stats = {
-            'total_appointments': total_appointments,
-            'today_appointments': today_appointments,
-            'week_appointments': 0,
-            'month_appointments': 0,
-            'total_patients': Patient.objects.filter(appointment__doctor=doctor).distinct().count(),
-            'upcoming_appointments': Appointment.objects.filter(
-                doctor=doctor, 
-                fecha__gt=timezone.now()
-            ).count(),
-        }
-        
-        patient_stats = []
-        appointment_analytics = []
-        filtered_appointments = []
-        using_stored_procedures = False
+            fecha__gt=timezone.now()
+        ).count(),
+    }
+    
+    # Estadísticas de pacientes
+    patient_stats = Patient.objects.filter(
+        appointment__doctor=doctor
+    ).annotate(
+        total_appointments=Count('appointment')
+    ).order_by('-total_appointments')[:10]
+    
+    # Analytics de citas en el período
+    appointment_analytics = Appointment.objects.filter(
+        doctor=doctor,
+        fecha__date__range=[start_date_obj, end_date_obj]
+    ).values('fecha__date').annotate(
+        count=Count('id')
+    ).order_by('fecha__date')
+    
+    # Citas filtradas
+    filtered_appointments = Appointment.objects.filter(
+        doctor=doctor,
+        fecha__date__range=[start_date_obj, end_date_obj]
+    ).select_related('paciente').order_by('-fecha')[:20]
+    
+    using_stored_procedures = False
     
     # Preparar datos para gráficos
     chart_data = prepare_chart_data(doctor, start_date_obj, end_date_obj, using_stored_procedures)
@@ -168,33 +183,20 @@ def export_analytics_report(request):
             'generated_at': timezone.now().isoformat(),
         }
         
-        try:
-            # Usar stored procedures si están disponibles
-            doctor_stats = MySQLStoredProcedures.call_doctor_statistics(doctor.id)
-            patient_stats = MySQLStoredProcedures.call_patient_statistics(doctor.id)
-            appointment_analytics = MySQLStoredProcedures.call_appointment_analytics(start_date_obj, end_date_obj)
-            
-            report_data.update({
-                'statistics': doctor_stats,
-                'top_patients': patient_stats[:10],
-                'analytics': appointment_analytics,
-                'data_source': 'stored_procedures'
-            })
-            
-        except Exception:
-            # Fallback a consultas básicas
-            appointments = Appointment.objects.filter(
-                doctor=doctor,
-                fecha__date__range=[start_date_obj, end_date_obj]
-            )
-            
-            report_data.update({
-                'statistics': {
-                    'total_appointments_period': appointments.count(),
-                    'unique_patients_period': appointments.values('paciente').distinct().count(),
-                },
-                'data_source': 'django_queries'
-            })
+        # Usar consultas Django básicas
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            fecha__date__range=[start_date_obj, end_date_obj]
+        )
+        
+        report_data.update({
+            'statistics': {
+                'total_appointments_period': appointments.count(),
+                'unique_patients_period': appointments.values('paciente').distinct().count(),
+                'total_appointments_doctor': Appointment.objects.filter(doctor=doctor).count(),
+            },
+            'data_source': 'django_queries'
+        })
         
         if format_type == 'json':
             response = JsonResponse(report_data, json_dumps_params={'indent': 2})
@@ -213,74 +215,73 @@ def prepare_chart_data(doctor, start_date, end_date, using_sp=False):
     chart_data = {}
     
     try:
-        if using_sp:
-            # Usar stored procedures para datos más eficientes
-            appointments_data = MySQLStoredProcedures.call_filter_appointments_by_date(
-                doctor.id, start_date, end_date, None
-            )
+        # Usar consultas Django básicas (más confiable)
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            fecha__date__range=[start_date, end_date]
+        ).select_related('paciente')
+        
+        # Inicializar contadores
+        daily_counts = {}
+        priority_counts = {'Urgente': 0, 'Alta': 0, 'Media': 0, 'Baja': 0}
+        hourly_counts = {i: 0 for i in range(8, 19)}  # 8 AM to 6 PM
+        
+        # Procesar citas
+        for apt in appointments:
+            # Citas por día
+            apt_date = apt.fecha.strftime('%Y-%m-%d')
+            daily_counts[apt_date] = daily_counts.get(apt_date, 0) + 1
             
-            # Procesar datos para gráficos
-            daily_counts = {}
-            priority_counts = {'U': 0, 'A': 0, 'M': 0, 'B': 0}
-            hourly_counts = {str(i): 0 for i in range(8, 19)}  # 8 AM to 6 PM
-            
-            for apt in appointments_data:
-                # Citas por día
-                apt_date = apt['fecha'].strftime('%Y-%m-%d')
-                daily_counts[apt_date] = daily_counts.get(apt_date, 0) + 1
-                
-                # Distribución por prioridad
-                priority = apt['patient_priority']
+            # Distribución por prioridad
+            if hasattr(apt.paciente, 'prioridad'):
+                priority = apt.paciente.get_prioridad_display()
                 if priority in priority_counts:
                     priority_counts[priority] += 1
-                
-                # Citas por hora
-                hour = str(apt['fecha'].hour)
-                if hour in hourly_counts:
-                    hourly_counts[hour] += 1
             
-            chart_data = {
-                'appointments_by_day': {
-                    'labels': list(daily_counts.keys()),
-                    'data': list(daily_counts.values())
-                },
-                'priority_distribution': {
-                    'labels': ['Urgente', 'Alta', 'Media', 'Baja'],
-                    'data': [priority_counts['U'], priority_counts['A'], priority_counts['M'], priority_counts['B']],
-                    'colors': ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
-                },
-                'appointments_by_hour': {
-                    'labels': [f"{i}:00" for i in range(8, 19)],
-                    'data': [hourly_counts[str(i)] for i in range(8, 19)]
-                }
+            # Citas por hora
+            hour = apt.fecha.hour
+            if hour in hourly_counts:
+                hourly_counts[hour] += 1
+        
+        # Generar todas las fechas en el rango
+        current_date = start_date
+        all_dates = []
+        while current_date <= end_date:
+            date_str = current_date.strftime('%Y-%m-%d')
+            all_dates.append(date_str)
+            if date_str not in daily_counts:
+                daily_counts[date_str] = 0
+            current_date += timedelta(days=1)
+        
+        chart_data = {
+            'appointments_by_day': {
+                'labels': sorted(all_dates),
+                'data': [daily_counts[date] for date in sorted(all_dates)]
+            },
+            'priority_distribution': {
+                'labels': ['Urgente', 'Alta', 'Media', 'Baja'],
+                'data': [priority_counts['Urgente'], priority_counts['Alta'], priority_counts['Media'], priority_counts['Baja']],
+                'colors': ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+            },
+            'appointments_by_hour': {
+                'labels': [f"{i}:00" for i in range(8, 19)],
+                'data': [hourly_counts[i] for i in range(8, 19)]
             }
-            
-        else:
-            # Fallback a consultas Django básicas
-            appointments = Appointment.objects.filter(
-                doctor=doctor,
-                fecha__date__range=[start_date, end_date]
-            ).select_related('paciente')
-            
-            chart_data = {
-                'appointments_by_day': {'labels': [], 'data': []},
-                'priority_distribution': {
-                    'labels': ['Urgente', 'Alta', 'Media', 'Baja'],
-                    'data': [0, 0, 0, 0],
-                    'colors': ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
-                },
-                'appointments_by_hour': {
-                    'labels': [f"{i}:00" for i in range(8, 19)],
-                    'data': [0] * 11
-                }
-            }
+        }
     
     except Exception as e:
         # Datos vacíos en caso de error
         chart_data = {
             'appointments_by_day': {'labels': [], 'data': []},
-            'priority_distribution': {'labels': [], 'data': [], 'colors': []},
-            'appointments_by_hour': {'labels': [], 'data': []}
+            'priority_distribution': {
+                'labels': ['Urgente', 'Alta', 'Media', 'Baja'],
+                'data': [0, 0, 0, 0],
+                'colors': ['#dc3545', '#fd7e14', '#ffc107', '#28a745']
+            },
+            'appointments_by_hour': {
+                'labels': [f"{i}:00" for i in range(8, 19)],
+                'data': [0] * 11
+            }
         }
     
     return chart_data
@@ -289,8 +290,9 @@ def prepare_chart_data(doctor, start_date, end_date, using_sp=False):
 def get_appointments_by_day_chart(doctor, start_date, end_date):
     """Generar datos para gráfico de citas por día"""
     try:
-        appointments_data = MySQLStoredProcedures.call_filter_appointments_by_date(
-            doctor.id, start_date, end_date, None
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            fecha__date__range=[start_date, end_date]
         )
         
         daily_counts = {}
@@ -302,8 +304,8 @@ def get_appointments_by_day_chart(doctor, start_date, end_date):
             current_date += timedelta(days=1)
         
         # Contar citas por día
-        for apt in appointments_data:
-            apt_date = apt['fecha'].strftime('%Y-%m-%d')
+        for apt in appointments:
+            apt_date = apt.fecha.strftime('%Y-%m-%d')
             if apt_date in daily_counts:
                 daily_counts[apt_date] += 1
         
@@ -320,20 +322,22 @@ def get_appointments_by_day_chart(doctor, start_date, end_date):
 def get_priority_distribution_chart(doctor, start_date, end_date):
     """Generar datos para gráfico de distribución por prioridad"""
     try:
-        appointments_data = MySQLStoredProcedures.call_filter_appointments_by_date(
-            doctor.id, start_date, end_date, None
-        )
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            fecha__date__range=[start_date, end_date]
+        ).select_related('paciente')
         
-        priority_counts = {'U': 0, 'A': 0, 'M': 0, 'B': 0}
+        priority_counts = {'Urgente': 0, 'Alta': 0, 'Media': 0, 'Baja': 0}
         
-        for apt in appointments_data:
-            priority = apt['patient_priority']
-            if priority in priority_counts:
-                priority_counts[priority] += 1
+        for apt in appointments:
+            if hasattr(apt.paciente, 'prioridad'):
+                priority = apt.paciente.get_prioridad_display()
+                if priority in priority_counts:
+                    priority_counts[priority] += 1
         
         return {
             'labels': ['Urgente', 'Alta', 'Media', 'Baja'],
-            'data': [priority_counts['U'], priority_counts['A'], priority_counts['M'], priority_counts['B']],
+            'data': [priority_counts['Urgente'], priority_counts['Alta'], priority_counts['Media'], priority_counts['Baja']],
             'colors': ['#dc3545', '#fd7e14', '#ffc107', '#28a745'],
             'title': 'Distribución por Prioridad'
         }
@@ -345,7 +349,7 @@ def get_priority_distribution_chart(doctor, start_date, end_date):
 def get_patient_age_groups_chart(doctor):
     """Generar datos para gráfico de grupos de edad de pacientes"""
     try:
-        patient_stats = MySQLStoredProcedures.call_patient_statistics(doctor.id)
+        patients = Patient.objects.filter(appointment__doctor=doctor).distinct()
         
         age_groups = {
             '0-18': 0,
@@ -355,21 +359,22 @@ def get_patient_age_groups_chart(doctor):
             '66+': 0
         }
         
-        for patient in patient_stats:
-            age = patient.get('age', 0)
-            if age is None:
-                continue
+        today = timezone.now().date()
+        
+        for patient in patients:
+            if patient.fecha_nacimiento:
+                age = (today - patient.fecha_nacimiento).days // 365
                 
-            if age <= 18:
-                age_groups['0-18'] += 1
-            elif age <= 35:
-                age_groups['19-35'] += 1
-            elif age <= 50:
-                age_groups['36-50'] += 1
-            elif age <= 65:
-                age_groups['51-65'] += 1
-            else:
-                age_groups['66+'] += 1
+                if age <= 18:
+                    age_groups['0-18'] += 1
+                elif age <= 35:
+                    age_groups['19-35'] += 1
+                elif age <= 50:
+                    age_groups['36-50'] += 1
+                elif age <= 65:
+                    age_groups['51-65'] += 1
+                else:
+                    age_groups['66+'] += 1
         
         return {
             'labels': list(age_groups.keys()),
@@ -384,14 +389,15 @@ def get_patient_age_groups_chart(doctor):
 def get_appointments_by_hour_chart(doctor, start_date, end_date):
     """Generar datos para gráfico de citas por hora del día"""
     try:
-        appointments_data = MySQLStoredProcedures.call_filter_appointments_by_date(
-            doctor.id, start_date, end_date, None
+        appointments = Appointment.objects.filter(
+            doctor=doctor,
+            fecha__date__range=[start_date, end_date]
         )
         
         hourly_counts = {i: 0 for i in range(8, 19)}  # 8 AM to 6 PM
         
-        for apt in appointments_data:
-            hour = apt['fecha'].hour
+        for apt in appointments:
+            hour = apt.fecha.hour
             if hour in hourly_counts:
                 hourly_counts[hour] += 1
         

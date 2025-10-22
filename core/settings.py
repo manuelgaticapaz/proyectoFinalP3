@@ -40,7 +40,10 @@ INSTALLED_APPS = [
     'patients.apps.PatientsConfig', # O simplemente 'patients'
     'doctors.apps.DoctorsConfig',   # O simplemente 'doctors'
     'appointments.apps.AppointmentsConfig', # O simplemente 'appointments'
+    'clinicas',  # Nueva app para sistema multi-tenant
+    'reportes',  # Nueva app para reportes avanzados
     'rest_framework',
+    # 'django_extensions',  # Comentado temporalmente
     ##'api',
 ]
 

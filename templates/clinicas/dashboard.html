@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Clínicas - MediCitas Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .clinicas-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+    
+    .clinica-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+        transition: transform 0.3s ease;
+    }
+    
+    .clinica-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    
+    .stat-item {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+    
+    .btn-clinica {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin: 2px;
+    }
+    
+    .btn-clinica:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        color: white;
+    }
+    
+    .header-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .status-activa {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactiva {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="clinicas-container">
+    <div class="container">
+        <!-- Header con estadísticas generales -->
+        <div class="header-card">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h2 class="mb-0">
+                        <i class="bi bi-building"></i>
+                        Dashboard de Clínicas
+                    </h2>
+                    <p class="text-muted mb-0">Gestión centralizada del sistema multi-tenant</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'clinicas:crear' %}" class="btn btn-clinica">
+                        <i class="bi bi-plus-circle"></i> Nueva Clínica
+                    </a>
+                    <a href="{% url 'clinicas:reportes_consolidados' %}" class="btn btn-clinica">
+                        <i class="bi bi-graph-up"></i> Reportes
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Estadísticas generales -->
+            <div class="stats-grid mt-4">
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ total_clinicas }}</h3>
+                    <p class="stat-label">Total Clínicas</p>
+                </div>
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ clinicas_activas }}</h3>
+                    <p class="stat-label">Clínicas Activas</p>
+                </div>
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ estadisticas|length }}</h3>
+                    <p class="stat-label">En Operación</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de clínicas -->
+        <div class="row">
+            {% for stat in estadisticas %}
+                <div class="col-lg-6 col-xl-4">
+                    <div class="clinica-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1">{{ stat.clinica.nombre }}</h5>
+                                <small class="text-muted">Código: {{ stat.clinica.codigo }}</small>
+                            </div>
+                            <span class="status-badge {% if stat.clinica.activa %}status-activa{% else %}status-inactiva{% endif %}">
+                                {% if stat.clinica.activa %}Activa{% else %}Inactiva{% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <p class="mb-1"><i class="bi bi-geo-alt"></i> {{ stat.clinica.direccion|truncatechars:50 }}</p>
+                            <p class="mb-1"><i class="bi bi-telephone"></i> {{ stat.clinica.telefono }}</p>
+                            <p class="mb-0"><i class="bi bi-envelope"></i> {{ stat.clinica.email }}</p>
+                        </div>
+                        
+                        <!-- Estadísticas de la clínica -->
+                        <div class="row text-center mb-3">
+                            <div class="col-3">
+                                <strong class="d-block">{{ stat.doctores }}</strong>
+                                <small class="text-muted">Doctores</small>
+                            </div>
+                            <div class="col-3">
+                                <strong class="d-block">{{ stat.pacientes }}</strong>
+                                <small class="text-muted">Pacientes</small>
+                            </div>
+                            <div class="col-3">
+                                <strong class="d-block">{{ stat.citas_mes }}</strong>
+                                <small class="text-muted">Citas/Mes</small>
+                            </div>
+                            <div class="col-3">
+                                <strong class="d-block">{{ stat.usuarios }}</strong>
+                                <small class="text-muted">Usuarios</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Acciones -->
+                        <div class="text-center">
+                            <a href="{% url 'clinicas:detalle' stat.clinica.id %}" class="btn btn-clinica btn-sm">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                            <a href="{% url 'clinicas:editar' stat.clinica.id %}" class="btn btn-clinica btn-sm">
+                                <i class="bi bi-pencil"></i> Editar
+                            </a>
+                            <a href="{% url 'clinicas:usuarios' stat.clinica.id %}" class="btn btn-clinica btn-sm">
+                                <i class="bi bi-people"></i> Usuarios
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="clinica-card text-center py-5">
+                        <i class="bi bi-building" style="font-size: 4rem; color: #ccc;"></i>
+                        <h4 class="mt-3 text-muted">No hay clínicas registradas</h4>
+                        <p class="text-muted">Comienza creando tu primera clínica</p>
+                        <a href="{% url 'clinicas:crear' %}" class="btn btn-clinica">
+                            <i class="bi bi-plus-circle"></i> Crear Primera Clínica
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Acciones rápidas -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="clinica-card">
+                    <h5 class="mb-3">
+                        <i class="bi bi-lightning"></i>
+                        Acciones Rápidas
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'clinicas:transferir_paciente' %}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="bi bi-arrow-left-right"></i>
+                                Transferir Paciente
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'clinicas:reportes_consolidados' %}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="bi bi-graph-up"></i>
+                                Reportes Consolidados
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'reportes:dashboard' %}" class="btn btn-outline-info w-100 mb-2">
+                                <i class="bi bi-file-earmark-bar-graph"></i>
+                                Centro de Reportes
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'calendario:calendario' %}" class="btn btn-outline-warning w-100 mb-2">
+                                <i class="bi bi-calendar3"></i>
+                                Calendario Global
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Agregar animaciones y efectos interactivos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animar las tarjetas al cargar
+        const cards = document.querySelectorAll('.clinica-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+        
+        // Agregar efectos hover a los botones
+        const buttons = document.querySelectorAll('.btn-clinica');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px) scale(1.05)';
+            });
+            
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    });
+</script>
+{% endblock %}

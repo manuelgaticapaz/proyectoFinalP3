@@ -49,6 +49,54 @@
     </div>
 </div>
 
+<!-- Nuevas Funcionalidades - Navegación Rápida -->
+{% if user.is_staff or user.is_superuser %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card card-custom">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="mb-0">
+                    <i class="bi bi-rocket-takeoff"></i> 
+                    Funcionalidades Avanzadas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'calendario:calendario' %}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="bi bi-calendar3 display-6 mb-2"></i>
+                            <strong>Calendario Interactivo</strong>
+                            <small class="text-muted mt-1">Vista mensual con drag & drop</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'reportes:dashboard' %}" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="bi bi-graph-up display-6 mb-2"></i>
+                            <strong>Reportes Avanzados</strong>
+                            <small class="text-muted mt-1">PDF, Excel y gráficos</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'clinicas:dashboard' %}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="bi bi-building display-6 mb-2"></i>
+                            <strong>Gestión de Clínicas</strong>
+                            <small class="text-muted mt-1">Sistema multi-tenant</small>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'analytics_dashboard' %}" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center p-3 text-decoration-none">
+                            <i class="bi bi-bar-chart display-6 mb-2"></i>
+                            <strong>Analytics</strong>
+                            <small class="text-muted mt-1">Análisis y estadísticas</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Filter Controls -->
 <div class="row mb-4">
     <div class="col-12">

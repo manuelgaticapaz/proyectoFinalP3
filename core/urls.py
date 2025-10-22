@@ -42,6 +42,11 @@ urlpatterns = [
     path('analytics/ajax/', appointment_analytics_ajax, name='appointment_analytics_ajax'),
     path('analytics/export/', export_analytics_report, name='export_analytics_report'),
     
+    # Nuevas URLs para las mejoras implementadas
+    path('calendario/', include('appointments.urls_calendario')),
+    path('reportes/', include('reportes.urls')),
+    path('clinicas/', include('clinicas.urls')),
+    
     #apis
     path('api/v1/appointments/', include('appointments.urls')),
     path('api/v1/doctors/', include('doctors.urls')),

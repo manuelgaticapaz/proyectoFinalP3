@@ -144,22 +144,37 @@ Se han implementado **18 mejoras significativas** al sistema de gestión de cita
    - Recordatorios por email/SMS
    - Notificaciones push en navegador
 
-2. **Calendario Interactivo**
-   - Vista de calendario mensual
-   - Drag & drop para reagendar
+2. **🗓️ Calendario Interactivo** ⭐ **DESTACADO**
+   - 📅 **Vista de calendario mensual completa**
+   - 🖱️ **Drag & drop para reagendar citas** (funcionalidad premium)
+   - 🔄 **Sincronización en tiempo real**
+   - 📱 **Vista responsiva para móviles**
+   - 🎨 **Códigos de color por tipo de cita**
+   - ⚡ **Navegación rápida entre meses**
 
-3. **Reportes Avanzados**
-   - Exportación a PDF/Excel
-   - Gráficos y estadísticas detalladas
+3. **📊 Reportes Avanzados** ⭐ **DESTACADO**
+   - 📄 **Exportación a PDF/Excel** (múltiples formatos)
+   - 📈 **Gráficos y estadísticas detalladas**
+   - 📋 **Reportes personalizables por período**
+   - 💹 **Dashboard ejecutivo con KPIs**
+   - 🎯 **Análisis de tendencias y patrones**
+   - 📊 **Métricas de ocupación y eficiencia**
+   - 🔍 **Filtros avanzados por doctor, paciente, fecha**
 
 4. **Integración con APIs Externas**
    - Sistemas de facturación
    - Historias clínicas electrónicas
 
-### **Fase 3 - Escalabilidad**
-1. **Múltiples Clínicas**
-   - Sistema multi-tenant
-   - Gestión de sucursales
+### **Fase 3 - Escalabilidad** 🚀
+
+1. **🏥 Múltiples Clínicas** ⭐ **FUNCIONALIDAD CLAVE**
+   - 🏢 **Sistema multi-tenant completo**
+   - 🌐 **Gestión centralizada de sucursales**
+   - 👥 **Roles y permisos por clínica**
+   - 📊 **Reportes consolidados multi-sede**
+   - 🔄 **Transferencia de pacientes entre sucursales**
+   - ⚙️ **Configuración independiente por clínica**
+   - 📱 **Panel de administración global**
 
 2. **App Móvil**
    - React Native o Flutter

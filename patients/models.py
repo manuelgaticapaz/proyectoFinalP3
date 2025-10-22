@@ -64,6 +64,15 @@ class Patient(models.Model):
         verbose_name="Prioridad",
         help_text="Nivel de prioridad para la atención del paciente."
     )
+    
+    # Referencia a la clínica (para sistema multi-tenant)
+    clinica = models.ForeignKey(
+        'clinicas.Clinica', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        verbose_name="Clínica"
+    )
 
     # --- Metadatos y Métodos ---
 

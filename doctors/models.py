@@ -11,6 +11,19 @@ class Doctor(models.Model):
     apellidos = models.CharField(max_length=150, verbose_name="Apellidos")
     especialidad = models.CharField(max_length=100, verbose_name="Especialidad")
     telefono = models.CharField(max_length=20, blank=True, verbose_name="Teléfono de contacto")
+    
+    # Referencia a la clínica (para sistema multi-tenant)
+    clinica = models.ForeignKey(
+        'clinicas.Clinica', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        verbose_name="Clínica"
+    )
+    
+    # Configuraciones específicas del doctor
+    duracion_cita_default = models.IntegerField(default=30, verbose_name="Duración Default de Cita (min)")
+    activo = models.BooleanField(default=True, verbose_name="Doctor Activo")
 
     class Meta:
         verbose_name = "Doctor"
