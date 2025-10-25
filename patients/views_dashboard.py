@@ -102,6 +102,9 @@ def patient_dashboard(request):
     # Choices para filtros
     priority_choices = Patient.PRIORITY_CHOICES
     
+    # Calcular el total de citas del doctor
+    total_appointments_count = Appointment.objects.filter(doctor=doctor).count()
+    
     context = {
         'patients_data': patients_data,
         'patient_stats': patient_stats[:10],  # Top 10 pacientes
@@ -112,6 +115,7 @@ def patient_dashboard(request):
         'age_max': age_max,
         'priority_choices': priority_choices,
         'total_patients': len(patients_data),
+        'total_appointments_count': total_appointments_count,
         'current_page': int(page),
         'has_next': len(patients_data) == per_page,  # Aproximación
         'has_previous': int(page) > 1,

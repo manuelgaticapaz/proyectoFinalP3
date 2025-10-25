@@ -1,0 +1,299 @@
+/* Personalización visual para MediCitas Pro Admin */
+
+/* Colores principales */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --medicitas-blue: #4facfe;
+    --medicitas-purple: #667eea;
+}
+
+/* Header personalizado */
+#header {
+    background: linear-gradient(135deg, var(--medicitas-blue) 0%, var(--medicitas-purple) 100%);
+    color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+#branding h1, #branding h1 a:link, #branding h1 a:visited {
+    color: white;
+    font-weight: 600;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+#user-tools {
+    color: white;
+}
+
+#user-tools a {
+    color: white;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+#user-tools a:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+/* Navegación */
+.breadcrumbs {
+    background: var(--light-color);
+    border-bottom: 1px solid #dee2e6;
+    padding: 10px 20px;
+}
+
+.breadcrumbs a {
+    color: var(--medicitas-blue);
+    text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+    color: var(--medicitas-purple);
+}
+
+/* Página principal del admin */
+.dashboard .module {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.dashboard .module h2 {
+    background: linear-gradient(135deg, var(--medicitas-blue) 0%, var(--medicitas-purple) 100%);
+    color: white;
+    padding: 15px 20px;
+    margin: 0;
+    font-weight: 500;
+}
+
+.dashboard .module table {
+    margin: 0;
+}
+
+.dashboard .module th {
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+/* Botones */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: linear-gradient(135deg, var(--medicitas-blue) 0%, var(--medicitas-purple) 100%);
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover, .submit-row input:hover, a.button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+}
+
+.button.default, input[type=submit].default, .submit-row input.default {
+    background: linear-gradient(135deg, var(--success-color) 0%, #20c997 100%);
+}
+
+/* Tablas */
+.results {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.results th {
+    background: linear-gradient(135deg, var(--medicitas-blue) 0%, var(--medicitas-purple) 100%);
+    color: white;
+    font-weight: 500;
+    padding: 12px 15px;
+}
+
+.results tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.results tbody tr:hover {
+    background-color: rgba(79, 172, 254, 0.1);
+}
+
+/* Formularios */
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.form-row input, .form-row select, .form-row textarea {
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    padding: 8px 12px;
+    transition: border-color 0.3s ease;
+}
+
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+    border-color: var(--medicitas-blue);
+    box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+}
+
+/* Fieldsets */
+fieldset.module {
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+fieldset.module h2 {
+    background: linear-gradient(135deg, var(--medicitas-blue) 0%, var(--medicitas-purple) 100%);
+    color: white;
+    padding: 10px 15px;
+    margin: 0;
+    border-radius: 10px 10px 0 0;
+    font-weight: 500;
+}
+
+/* Filtros */
+#changelist-filter {
+    background-color: var(--light-color);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+#changelist-filter h2 {
+    color: var(--dark-color);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+#changelist-filter h3 {
+    background: var(--medicitas-blue);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Mensajes */
+.messagelist li {
+    border-radius: 5px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid;
+}
+
+.messagelist .success {
+    background-color: #d4edda;
+    border-left-color: var(--success-color);
+    color: #155724;
+}
+
+.messagelist .warning {
+    background-color: #fff3cd;
+    border-left-color: var(--warning-color);
+    color: #856404;
+}
+
+.messagelist .error {
+    background-color: #f8d7da;
+    border-left-color: var(--danger-color);
+    color: #721c24;
+}
+
+/* Paginación */
+.paginator {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.paginator a, .paginator .this-page {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 2px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.paginator a {
+    background-color: white;
+    border: 1px solid #dee2e6;
+    color: var(--medicitas-blue);
+}
+
+.paginator a:hover {
+    background-color: var(--medicitas-blue);
+    color: white;
+}
+
+.paginator .this-page {
+    background: linear-gradient(135deg, var(--medicitas-blue) 0%, var(--medicitas-purple) 100%);
+    color: white;
+    font-weight: 500;
+}
+
+/* Iconos de acciones */
+.addlink:before, .changelink:before, .deletelink:before {
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-right: 5px;
+}
+
+.addlink:before {
+    content: "\f067"; /* fa-plus */
+}
+
+.changelink:before {
+    content: "\f044"; /* fa-edit */
+}
+
+.deletelink:before {
+    content: "\f1f8"; /* fa-trash */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #header {
+        padding: 10px;
+    }
+    
+    .dashboard .module {
+        margin-bottom: 15px;
+    }
+    
+    .results {
+        font-size: 14px;
+    }
+    
+    .form-row {
+        margin-bottom: 10px;
+    }
+}
+
+/* Animaciones suaves */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Mejoras en la accesibilidad */
+a:focus, button:focus, input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--medicitas-blue);
+    outline-offset: 2px;
+}

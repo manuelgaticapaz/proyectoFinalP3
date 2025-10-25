@@ -1,43 +1,77 @@
-# nombre_de_tu_app/admin.py
-
 from django.contrib import admin
-from .models import Patient # Importa tu modelo Patient
+from django.utils.html import format_html
+from .models import Patient
 
-# --- Opción 1: Registro Básico ---
-# La forma más simple de registrar el modelo.
-# admin.site.register(Patient)
-
-# --- Opción 2: Registro Personalizado (Recomendado) ---
-# Permite configurar cómo se muestra y se interactúa con el modelo en el admin.
-@admin.register(Patient) # Usa el decorador @admin.register (alternativa a admin.site.register)
+@admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('dni', 'apellidos', 'nombre', 'fecha_nacimiento', 'prioridad', 'calcular_edad') # Campos a mostrar en la lista
-    list_filter = ('prioridad',) # Campos por los que se puede filtrar en la barra lateral
-    search_fields = ('dni', 'apellidos', 'nombre') # Campos en los que se puede buscar
-    ordering = ('apellidos', 'nombre') # Orden por defecto en el admin
-    # readonly_fields = ('calcular_edad',) # Si quieres mostrar la edad en el formulario pero no permitir editarla
-
-    # Opcional: Agrupar campos en el formulario de edición/creación
+    list_display = ('get_full_name', 'dni', 'get_age', 'get_priority_badge', 'clinica', 'get_appointment_count')
+    list_filter = ('prioridad', 'clinica', 'fecha_nacimiento')
+    search_fields = ('dni', 'apellidos', 'nombre', 'informacion_contacto')
+    ordering = ('apellidos', 'nombre')
+    list_per_page = 25
+    
     fieldsets = (
-        ('Información Personal', {
-            'fields': ('nombre', 'apellidos', 'dni', 'fecha_nacimiento')
+        ('👤 Información Personal', {
+            'fields': ('nombre', 'apellidos', 'dni', 'fecha_nacimiento'),
+            'description': 'Datos básicos de identificación del paciente'
         }),
-        ('Información Médica y Contacto', {
-            'fields': ('historial_medico_basico', 'informacion_contacto'),
-            'classes': ('collapse',) # Hace esta sección colapsable
+        ('🏥 Información Médica', {
+            'fields': ('historial_medico_basico', 'prioridad'),
+            'description': 'Historial médico y nivel de prioridad'
         }),
-        ('Clasificación', {
-            'fields': ('prioridad',)
+        ('📞 Contacto', {
+            'fields': ('informacion_contacto',),
+            'classes': ('collapse',),
+            'description': 'Información de contacto del paciente'
+        }),
+        ('🏢 Clínica', {
+            'fields': ('clinica',),
+            'description': 'Clínica a la que pertenece el paciente'
         }),
     )
-
-    # Para que 'calcular_edad' funcione en list_display, necesita estar definida
-    # como un método en el modelo Patient (como lo hicimos antes) o aquí en PatientAdmin.
-    # Si está en el modelo, Django lo encontrará. Si lo defines aquí:
-    # def edad_paciente(self, obj):
-    #     return obj.calcular_edad()
-    # edad_paciente.short_description = 'Edad' # Nombre de la columna
-    # Y luego usas 'edad_paciente' en list_display
-
-# Nota: Elige solo UNA de las opciones (la básica o la personalizada).
-# La opción personalizada (Opción 2) es mucho más útil.
+    
+    def get_full_name(self, obj):
+        return f"{obj.apellidos}, {obj.nombre}"
+    get_full_name.short_description = '👤 Paciente'
+    get_full_name.admin_order_field = 'apellidos'
+    
+    def get_age(self, obj):
+        age = obj.calcular_edad()
+        if age is not None:
+            if age < 18:
+                return format_html('<span style="color: #28a745;">👶 {} años</span>', age)
+            elif age > 65:
+                return format_html('<span style="color: #dc3545;">👴 {} años</span>', age)
+            else:
+                return format_html('<span>🧑 {} años</span>', age)
+        return format_html('<span style="color: #6c757d;">❓ N/A</span>')
+    get_age.short_description = '📅 Edad'
+    
+    def get_priority_badge(self, obj):
+        colors = {
+            'U': '#dc3545',  # Rojo para urgente
+            'A': '#fd7e14',  # Naranja para alta
+            'M': '#ffc107',  # Amarillo para media
+            'B': '#28a745',  # Verde para baja
+        }
+        icons = {
+            'U': '🚨',
+            'A': '⚠️',
+            'M': '📋',
+            'B': '✅',
+        }
+        color = colors.get(obj.prioridad, '#6c757d')
+        icon = icons.get(obj.prioridad, '📋')
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">{} {}</span>',
+            color, icon, obj.get_prioridad_display()
+        )
+    get_priority_badge.short_description = '🎯 Prioridad'
+    get_priority_badge.admin_order_field = 'prioridad'
+    
+    def get_appointment_count(self, obj):
+        count = obj.appointment_set.count()
+        if count > 0:
+            return format_html('<span style="color: #007bff; font-weight: bold;">📅 {}</span>', count)
+        return format_html('<span style="color: #6c757d;">➖ 0</span>')
+    get_appointment_count.short_description = '📊 Citas'

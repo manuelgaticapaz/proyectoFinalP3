@@ -89,10 +89,8 @@ def analytics_dashboard(request):
         fecha__date__range=[start_date_obj, end_date_obj]
     ).select_related('paciente').order_by('-fecha')[:20]
     
-    using_stored_procedures = False
-    
     # Preparar datos para gráficos
-    chart_data = prepare_chart_data(doctor, start_date_obj, end_date_obj, using_stored_procedures)
+    chart_data = prepare_chart_data(doctor, start_date_obj, end_date_obj)
     
     context = {
         'doctor': doctor,
@@ -103,7 +101,6 @@ def analytics_dashboard(request):
         'start_date': start_date,
         'end_date': end_date,
         'chart_data': json.dumps(chart_data),
-        'using_stored_procedures': using_stored_procedures,
         'date_range_days': (end_date_obj - start_date_obj).days,
     }
     
@@ -210,7 +207,7 @@ def export_analytics_report(request):
         return JsonResponse({'error': f'Error generando reporte: {str(e)}'}, status=500)
 
 
-def prepare_chart_data(doctor, start_date, end_date, using_sp=False):
+def prepare_chart_data(doctor, start_date, end_date):
     """Preparar datos para gráficos del dashboard"""
     chart_data = {}
     

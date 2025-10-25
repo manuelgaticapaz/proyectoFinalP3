@@ -110,11 +110,7 @@
             <div class="card bg-info text-white">
                 <div class="card-body text-center">
                     <i class="bi bi-graph-up display-4 mb-2"></i>
-                    <h3 class="mb-0">
-                        {% if patient_stats %}
-                            {% for patient in patient_stats %}{{ patient.total_appointments|add:0 }}{% if not forloop.last %}+{% endif %}{% endfor %}
-                        {% else %}0{% endif %}
-                    </h3>
+                    <h3 class="mb-0">{{ total_appointments_count|default:0 }}</h3>
                     <p class="mb-0">Citas Totales</p>
                 </div>
             </div>

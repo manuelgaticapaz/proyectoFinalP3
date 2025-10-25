@@ -117,22 +117,8 @@
                     <i class="bi bi-funnel"></i> Filtrar
                 </button>
             </div>
-            <div class="col-md-4">
-                <div class="btn-group w-100" role="group">
-                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(7)">7 días</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(30)">30 días</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(90)">90 días</button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="setDateRange(365)">1 año</button>
-                </div>
-            </div>
         </form>
         
-        {% if not using_stored_procedures %}
-            <div class="alert alert-warning mt-3" role="alert">
-                <i class="bi bi-exclamation-triangle"></i>
-                <strong>Modo básico:</strong> Para analytics avanzados ejecute: <code>python manage.py create_stored_procedures</code>
-            </div>
-        {% endif %}
     </div>
 
     <!-- Statistics Cards -->
@@ -273,7 +259,7 @@
                                             <strong>{{ patient.nombre }} {{ patient.apellidos }}</strong>
                                         </td>
                                         <td>{{ patient.dni }}</td>
-                                        <td>{{ patient.age|default:"N/A" }} años</td>
+                                        <td>{{ patient.calcular_edad|default:"N/A" }} años</td>
                                         <td>
                                             <span class="badge priority-{% if patient.prioridad == 'U' %}urgent{% elif patient.prioridad == 'A' %}high{% elif patient.prioridad == 'M' %}medium{% else %}low{% endif %}">
                                                 {% if patient.prioridad == 'U' %}Urgente
@@ -405,13 +391,13 @@
                                         <td>
                                             <strong>{{ appointment.fecha|date:"d/m/Y H:i" }}</strong>
                                         </td>
-                                        <td>{{ appointment.patient_name }} {{ appointment.patient_lastname }}</td>
-                                        <td>{{ appointment.patient_dni }}</td>
+                                        <td>{{ appointment.paciente.nombre }} {{ appointment.paciente.apellidos }}</td>
+                                        <td>{{ appointment.paciente.dni }}</td>
                                         <td>
-                                            <span class="badge priority-{% if appointment.patient_priority == 'U' %}urgent{% elif appointment.patient_priority == 'A' %}high{% elif appointment.patient_priority == 'M' %}medium{% else %}low{% endif %}">
-                                                {% if appointment.patient_priority == 'U' %}Urgente
-                                                {% elif appointment.patient_priority == 'A' %}Alta
-                                                {% elif appointment.patient_priority == 'M' %}Media
+                                            <span class="badge priority-{% if appointment.paciente.prioridad == 'U' %}urgent{% elif appointment.paciente.prioridad == 'A' %}high{% elif appointment.paciente.prioridad == 'M' %}medium{% else %}low{% endif %}">
+                                                {% if appointment.paciente.prioridad == 'U' %}Urgente
+                                                {% elif appointment.paciente.prioridad == 'A' %}Alta
+                                                {% elif appointment.paciente.prioridad == 'M' %}Media
                                                 {% else %}Baja{% endif %}
                                             </span>
                                         </td>
@@ -547,17 +533,6 @@
         }
     }
     
-    function setDateRange(days) {
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - days);
-        
-        document.getElementById('start_date').value = startDate.toISOString().split('T')[0];
-        document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
-        
-        // Auto submit form
-        document.querySelector('form').submit();
-    }
     
     function exportReport() {
         const startDate = document.getElementById('start_date').value;

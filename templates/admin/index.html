@@ -1,0 +1,223 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .welcome-banner {
+            background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .welcome-banner h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .welcome-banner p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            border-left: 4px solid;
+        }
+        
+        .stat-card.patients { border-left-color: #28a745; }
+        .stat-card.doctors { border-left-color: #007bff; }
+        .stat-card.appointments { border-left-color: #ffc107; }
+        .stat-card.clinics { border-left-color: #17a2b8; }
+        
+        .stat-card i {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin: 10px 0 5px 0;
+            font-weight: 600;
+        }
+        
+        .stat-card p {
+            color: #6c757d;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        .quick-actions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .quick-actions h2 {
+            color: #343a40;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .quick-actions h2 i {
+            margin-right: 10px;
+            color: #4facfe;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .action-btn {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #4facfe 0%, #667eea 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            color: white;
+        }
+        
+        .action-btn i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <h1><i class="fas fa-hospital-alt"></i> MediCitas Pro</h1>
+    <p>Sistema de Gestión Médica - Panel de Administración</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card patients">
+        <i class="fas fa-users" style="color: #28a745;"></i>
+        <h3>{{ total_patients|default:"0" }}</h3>
+        <p>Pacientes Registrados</p>
+    </div>
+    <div class="stat-card doctors">
+        <i class="fas fa-user-md" style="color: #007bff;"></i>
+        <h3>{{ total_doctors|default:"0" }}</h3>
+        <p>Doctores Activos</p>
+    </div>
+    <div class="stat-card appointments">
+        <i class="fas fa-calendar-check" style="color: #ffc107;"></i>
+        <h3>{{ total_appointments|default:"0" }}</h3>
+        <p>Citas Programadas</p>
+    </div>
+    <div class="stat-card clinics">
+        <i class="fas fa-hospital" style="color: #17a2b8;"></i>
+        <h3>{{ total_clinics|default:"0" }}</h3>
+        <p>Clínicas Registradas</p>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <h2><i class="fas fa-bolt"></i> Acciones Rápidas</h2>
+    <div class="action-buttons">
+        <a href="{% url 'admin:patients_patient_add' %}" class="action-btn">
+            <i class="fas fa-user-plus"></i>
+            Nuevo Paciente
+        </a>
+        <a href="{% url 'admin:appointments_appointment_add' %}" class="action-btn">
+            <i class="fas fa-calendar-plus"></i>
+            Nueva Cita
+        </a>
+        <a href="{% url 'admin:auth_user_add' %}" class="action-btn">
+            <i class="fas fa-user-md"></i>
+            Nuevo Doctor
+        </a>
+        <a href="{% url 'admin:patients_patient_changelist' %}" class="action-btn">
+            <i class="fas fa-list"></i>
+            Ver Pacientes
+        </a>
+    </div>
+</div>
+
+{% if app_list %}
+    {% for app in app_list %}
+        <div class="app-{{ app.app_label }} module">
+            <table>
+                <caption>
+                    <a href="{{ app.app_url }}" class="section" title="{% blocktrans with name=app.name %}Models in the {{ name }} application{% endblocktrans %}">
+                        {% if app.app_label == 'patients' %}
+                            <i class="fas fa-users"></i>
+                        {% elif app.app_label == 'appointments' %}
+                            <i class="fas fa-calendar-alt"></i>
+                        {% elif app.app_label == 'doctors' %}
+                            <i class="fas fa-user-md"></i>
+                        {% elif app.app_label == 'auth' %}
+                            <i class="fas fa-shield-alt"></i>
+                        {% elif app.app_label == 'clinicas' %}
+                            <i class="fas fa-hospital"></i>
+                        {% else %}
+                            <i class="fas fa-cog"></i>
+                        {% endif %}
+                        {{ app.name }}
+                    </a>
+                </caption>
+                {% for model in app.models %}
+                    <tr class="model-{{ model.object_name|lower }}">
+                        {% if model.admin_url %}
+                            <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                        {% else %}
+                            <th scope="row">{{ model.name }}</th>
+                        {% endif %}
+
+                        {% if model.add_url %}
+                            <td><a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a></td>
+                        {% else %}
+                            <td>&nbsp;</td>
+                        {% endif %}
+
+                        {% if model.admin_url %}
+                            {% if model.view_only %}
+                                <td><a href="{{ model.admin_url }}" class="viewlink">{% trans 'View' %}</a></td>
+                            {% else %}
+                                <td><a href="{{ model.admin_url }}" class="changelink">{% trans 'Change' %}</a></td>
+                            {% endif %}
+                        {% else %}
+                            <td>&nbsp;</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>{% trans "You don't have permission to view or edit anything." %}</p>
+{% endif %}
+{% endblock %}
